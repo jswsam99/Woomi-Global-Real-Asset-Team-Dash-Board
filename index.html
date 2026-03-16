@@ -594,6 +594,24 @@ const YR=[
   {y:2030,inv:0,rec:0,end:612.69,inc:0},
 ];
 
+// ══ TODAY DATE LOGIC ══
+const TODAY = new Date();
+const THIS_YEAR = TODAY.getFullYear();
+const THIS_MONTH = TODAY.getMonth() + 1; // 1-12
+
+function getYearStatus(year) {
+  if (year < THIS_YEAR) return 'actual';      // 과거 → 실적
+  if (year === THIS_YEAR) return 'partial';   // 올해 → 일부실적+예상
+  return 'forecast';                           // 미래 → 예상
+}
+
+function getItemStatus(year, month) {
+  if (!month) return getYearStatus(year) === 'actual' ? 'actual' : 'forecast';
+  if (year < THIS_YEAR) return 'actual';
+  if (year === THIS_YEAR && month <= THIS_MONTH) return 'actual';
+  return 'forecast';
+}
+
 // ══ FILTERS ══
 let AF={major:'전체',minor:'전체'};
 function setF(type,val,el){
@@ -660,8 +678,16 @@ const YR_DETAIL = {
   },
   2026: {
     invest: [],
-    recover: [{n:'문봉동IDC(청산완료)',g:'이지스',a:'IDC',amt:17.27}],
-    income: [{n:'린스퀘어',g:'이지스',a:'오피스',amt:16.28},{n:'글라스타워(40호)',g:'이지스',a:'오피스',amt:13.39},{n:'글라스타워(59호)',g:'이지스',a:'오피스',amt:1.33},{n:'신도림디큐브',g:'이지스',a:'오피스',amt:0},{n:'롯데분당점',g:'이지스',a:'오피스',amt:0},{n:'남양주연평물류(예상)',g:'K클라비스',a:'물류',amt:0}]
+    recover: [{n:'문봉동IDC(청산완료)',g:'이지스',a:'IDC',amt:17.27,m:1}],
+    income: [
+      {n:'문봉동IDC(청산배당)',g:'이지스',a:'IDC',amt:55.26,m:2},
+      {n:'린스퀘어',g:'이지스',a:'오피스',amt:16.28,m:12},
+      {n:'글라스타워(40호)',g:'이지스',a:'오피스',amt:13.39,m:12},
+      {n:'글라스타워(59호)',g:'이지스',a:'오피스',amt:1.33,m:12},
+      {n:'신도림디큐브(예상)',g:'이지스',a:'오피스',amt:0,m:12},
+      {n:'롯데분당점(예상)',g:'이지스',a:'오피스',amt:0,m:12},
+      {n:'남양주연평물류(예상)',g:'K클라비스',a:'물류',amt:19.16,m:12}
+    ]
   },
   2027: {
     invest: [],
@@ -693,22 +719,30 @@ function toggleYearDetail(y){
 function renderYearly(){
   const tbody=document.getElementById('yr-body');
   tbody.innerHTML=YR.map((r,i)=>{
-    const isCur=r.y===2026,isFore=r.y>2026;
+    const status=getYearStatus(r.y);
+    const isCur=r.y===THIS_YEAR;
+    const isFore=status==='forecast';
+    const isPartial=status==='partial';
     const prev=i>0?YR[i-1].end.toFixed(1):'0.0';
     const detail=YR_DETAIL[r.y];
     const hasDetail=detail&&(detail.invest.length||detail.recover.length||detail.income.length);
     
     let detailHTML='';
     if(detail){
-      const mkItems=(arr,color,icon)=>arr.length
-        ?arr.map(x=>`<div class="detail-item">
+      const mkItems=(arr,color,icon,year)=>arr.length
+        ?arr.map(x=>{
+          const st=getItemStatus(year,x.m);
+          const isForeItem=st==='forecast';
+          return `<div class="detail-item" style="${isForeItem?'opacity:0.65;border-style:dashed':''}">
             <div class="detail-item-left">
               <span class="badge ${getAssetBadge(x.a)}">${x.a}</span>
               ${x.n}
               <span style="font-size:10px;color:var(--text3)">${x.g}</span>
+              ${isForeItem?'<span style="font-size:10px;background:#fffbeb;color:#92400e;padding:1px 5px;border-radius:3px;font-weight:700">예상</span>':'<span style="font-size:10px;background:#ecfdf5;color:#065f46;padding:1px 5px;border-radius:3px;font-weight:700">실적</span>'}
             </div>
-            <div class="detail-item-amt" style="color:${color}">${icon}${x.amt.toFixed(1)}억</div>
-          </div>`).join('')
+            <div class="detail-item-amt" style="color:${isForeItem?'#94a3b8':color}">${x.amt>0?icon+x.amt.toFixed(1)+'억':'—'}</div>
+          </div>`;
+        }).join('')
         :`<div class="no-detail">해당 없음</div>`;
       
       detailHTML=`<tr class="yr-detail" id="yr-detail-${r.y}">
@@ -717,15 +751,15 @@ function renderYearly(){
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
               <div class="detail-section">
                 <div class="detail-section-title">🔵 신규투자</div>
-                <div class="detail-items">${mkItems(detail.invest,'#2563eb','-')}</div>
+                <div class="detail-items">${mkItems(detail.invest,'#2563eb','-',r.y)}</div>
               </div>
               <div class="detail-section">
                 <div class="detail-section-title">🟢 원금회수</div>
-                <div class="detail-items">${mkItems(detail.recover,'#059669','+')}</div>
+                <div class="detail-items">${mkItems(detail.recover,'#059669','+',r.y)}</div>
               </div>
               <div class="detail-section">
                 <div class="detail-section-title">🟡 이자·배당수익</div>
-                <div class="detail-items">${mkItems(detail.income,'#d97706','+')}</div>
+                <div class="detail-items">${mkItems(detail.income,'#d97706','+',r.y)}</div>
               </div>
             </div>
           </div>
@@ -733,8 +767,9 @@ function renderYearly(){
       </tr>`;
     }
     
+    const yearLabel = isCur ? ` ◀ 기준일 ${TODAY.getFullYear()}.${String(THIS_MONTH).padStart(2,'0')}.${String(TODAY.getDate()).padStart(2,'0')}` : isFore ? ' (예상)' : '';
     return `<tr class="yr-row ${isCur?'yr-cur':isFore?'yr-fore':''}" id="yr-row-${r.y}" onclick="toggleYearDetail(${r.y})" style="cursor:${hasDetail?'pointer':'default'}">
-      <td><strong>${r.y}</strong>${isCur?' ◀':isFore?' (예상)':''} ${hasDetail?'<span class="yr-toggle">▼</span>':''}</td>
+      <td><strong>${r.y}</strong>${yearLabel} ${hasDetail?'<span class="yr-toggle">▼</span>':''}</td>
       <td class="num">${prev}</td>
       <td class="num" style="color:${r.inv>0?'#dc2626':'#94a3b8'}">${r.inv>0?'-'+r.inv.toFixed(1):'—'}</td>
       <td class="num" style="color:#059669">${r.rec>0?r.rec.toFixed(1):'—'}</td>
@@ -894,6 +929,11 @@ function initCharts(){
 const saved=localStorage.getItem('ra_projects');
 if(saved){try{P=JSON.parse(saved);}catch(e){}}
 document.addEventListener('DOMContentLoaded',()=>{
+  // Update header date
+  const dateStr = `${TODAY.getFullYear()}.${String(THIS_MONTH).padStart(2,'0')}.${String(TODAY.getDate()).padStart(2,'0')}`;
+  const quarter = Math.ceil(THIS_MONTH/3);
+  document.getElementById('header-date').textContent = 
+    `Real Asset Team Portfolio Dashboard · 기준일 ${dateStr} · ${THIS_YEAR}-${quarter}Q`;
   renderItems();renderYearly();updateKPIs();initCharts();
 });
 </script>
