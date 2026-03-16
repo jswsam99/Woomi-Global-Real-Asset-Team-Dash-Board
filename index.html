@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>리얼에셋팀 투자출자현황 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f4f6fb;
+  --bg2: #eef1f8;
+  --surface: #ffffff;
+  --surface2: #f8faff;
+  --border: #e2e8f4;
+  --border2: #d0d9ed;
+  --accent: #1a4fa8;
+  --accent2: #2563eb;
+  --accent3: #3b82f6;
+  --gold: #d97706;
+  --green: #059669;
+  --red: #dc2626;
+  --teal: #0d9488;
+  --purple: #7c3aed;
+  --text: #0f172a;
+  --text2: #475569;
+  --text3: #94a3b8;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.10);
+  --mono: 'DM Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 0 36px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  position: sticky; top:0; z-index:100;
+}
+.header-left { display:flex; align-items:center; gap:20px; }
+.logo-wrap {
+  display:flex; align-items:center;
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px 0;
+}
+.logo-wrap img { height:38px; object-fit:contain; }
+.header-divider {
+  width:1px; height:28px; background:var(--border2);
+}
+.header-title h1 {
+  font-size:15px; font-weight:700; color:var(--text);
+  letter-spacing:-0.3px;
+}
+.header-title p {
+  font-size:11px; color:var(--text3); margin-top:1px;
+  font-family: var(--mono);
+}
+.header-right {
+  display:flex; gap:20px; align-items:center;
+}
+.header-chip {
+  display:flex; flex-direction:column; align-items:flex-end;
+}
+.header-chip .lbl { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.8px; }
+.header-chip .val { font-size:13px; font-weight:700; color:var(--accent); font-family:var(--mono); }
+
+/* ── NAV ── */
+nav {
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  padding: 0 36px;
+  display:flex; gap:0;
+}
+.nav-btn {
+  padding:13px 22px;
+  border:none; background:transparent;
+  color:var(--text2); cursor:pointer;
+  font-size:13px; font-family:'Pretendard',sans-serif;
+  font-weight:500; border-bottom:2px solid transparent;
+  transition:all 0.2s; letter-spacing:-0.2px;
+}
+.nav-btn:hover { color:var(--accent); }
+.nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:700; }
+
+/* ── PAGE ── */
+.page { display:none; padding:28px 36px; }
+.page.active { display:block; }
+
+/* ── KPI CARDS ── */
+.kpi-grid {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:16px; margin-bottom:24px;
+}
+.kpi-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px 24px;
+  box-shadow:var(--shadow);
+  position:relative; overflow:hidden;
+  transition:box-shadow 0.2s, transform 0.2s;
+}
+.kpi-card:hover { box-shadow:var(--shadow-lg); transform:translateY(-2px); }
+.kpi-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:4px;
+  background:var(--card-color, var(--accent2));
+  border-radius:14px 14px 0 0;
+}
+.kpi-icon {
+  width:40px; height:40px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; margin-bottom:14px;
+  background:var(--icon-bg, #eff6ff);
+}
+.kpi-label { font-size:11px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.kpi-value { font-family:var(--mono); font-size:30px; font-weight:500; color:var(--text); margin-bottom:4px; }
+.kpi-value small { font-size:16px; color:var(--text2); font-weight:400; }
+.kpi-sub { font-size:12px; color:var(--text2); margin-bottom:8px; }
+.kpi-badge {
+  display:inline-flex; align-items:center; gap:3px;
+  padding:3px 9px; border-radius:20px;
+  font-size:11px; font-weight:600;
+}
+.badge-up { background:#dcfce7; color:#15803d; }
+.badge-down { background:#fee2e2; color:#dc2626; }
+.badge-neutral { background:#f1f5f9; color:var(--text3); }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-size:13px; font-weight:700; color:var(--text2);
+  text-transform:uppercase; letter-spacing:1.5px;
+  margin-bottom:16px; margin-top:8px;
+  display:flex; align-items:center; gap:10px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── CHART AREA ── */
+.hero-chart-wrap {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:28px 32px;
+  box-shadow:var(--shadow);
+  margin-bottom:24px;
+}
+.hero-chart-header {
+  display:flex; justify-content:space-between; align-items:flex-start;
+  margin-bottom:24px;
+}
+.hero-chart-title h2 {
+  font-size:18px; font-weight:700; color:var(--text);
+  letter-spacing:-0.5px; margin-bottom:4px;
+}
+.hero-chart-title p {
+  font-size:12px; color:var(--text2);
+}
+.hero-stats {
+  display:flex; gap:28px;
+}
+.hero-stat {
+  text-align:right;
+}
+.hero-stat .hs-val {
+  font-family:var(--mono); font-size:20px; font-weight:600;
+  color:var(--accent);
+}
+.hero-stat .hs-lbl {
+  font-size:11px; color:var(--text3); margin-top:2px;
+}
+.chart-wrap-hero { position:relative; height:340px; }
+.chart-legend-row {
+  display:flex; gap:20px; margin-top:16px; flex-wrap:wrap;
+}
+.legend-item {
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; color:var(--text2);
+}
+.legend-dot {
+  width:10px; height:10px; border-radius:50%;
+}
+
+/* ── TWO COL ── */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:24px; }
+
+/* ── CHART CARD ── */
+.chart-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px 24px;
+  box-shadow:var(--shadow);
+}
+.chart-card h3 {
+  font-size:12px; font-weight:700; color:var(--text2);
+  text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;
+}
+.chart-wrap { position:relative; height:230px; }
+
+/* ── TABLE ── */
+.table-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  margin-bottom:24px;
+}
+.table-toolbar {
+  padding:16px 22px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface2);
+}
+.table-toolbar h3 {
+  font-size:13px; font-weight:700; color:var(--text);
+}
+.toolbar-controls { display:flex; gap:8px; }
+.filter-select, .search-input {
+  background:#fff; border:1px solid var(--border2);
+  border-radius:7px; padding:6px 12px;
+  color:var(--text); font-size:12px;
+  font-family:'Pretendard',sans-serif; outline:none;
+}
+.filter-select:focus, .search-input:focus { border-color:var(--accent3); }
+.search-input { width:190px; }
+table { width:100%; border-collapse:collapse; }
+thead tr { background:var(--surface2); }
+th {
+  padding:10px 16px; text-align:left;
+  font-size:11px; font-weight:700;
+  color:var(--text3); text-transform:uppercase; letter-spacing:0.8px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer; user-select:none; white-space:nowrap;
+}
+th:hover { color:var(--text2); }
+th.sort-asc::after { content:' ▲'; color:var(--accent3); }
+th.sort-desc::after { content:' ▼'; color:var(--accent3); }
+tbody tr { border-bottom:1px solid var(--border); transition:background 0.12s; }
+tbody tr:hover { background:#f0f5ff; }
+tbody tr:last-child { border-bottom:none; }
+td { padding:11px 16px; font-size:13px; color:var(--text); }
+td.mono { font-family:var(--mono); font-size:12px; }
+.trend-up { color:var(--green); font-weight:600; }
+.trend-down { color:var(--red); font-weight:600; }
+.trend-zero { color:var(--text3); }
+
+/* ── TAGS ── */
+.tag {
+  display:inline-block; font-size:10px; padding:2px 8px;
+  border-radius:4px; font-weight:700;
+}
+.tag-pjt1 { background:#eff6ff; color:#1d4ed8; }
+.tag-pjt2 { background:#f5f3ff; color:#6d28d9; }
+.tag-real { background:#ecfdf5; color:#065f46; }
+.tag-dev { background:#fffbeb; color:#92400e; }
+.pjt-type {
+  display:inline-block; font-size:10px; padding:2px 8px;
+  border-radius:4px; font-weight:700;
+}
+.type-오피스 { background:#eff6ff; color:#1d4ed8; }
+.type-물류 { background:#f0fdfa; color:#0f766e; }
+.type-IDC { background:#faf5ff; color:#6d28d9; }
+.type-기타 { background:#fffbeb; color:#92400e; }
+
+/* ── YEARLY HIGHLIGHT ── */
+.yr-current td { background:#eff6ff !important; font-weight:600; color:var(--accent) !important; }
+.yr-forecast td { color:var(--text3) !important; }
+
+/* ── TOTAL ROW ── */
+.total-row td { background:#f8faff; font-weight:700; border-top:2px solid var(--border2); }
+.subtotal-row td { background:#fafbff; font-weight:600; color:var(--accent); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+
+/* ── ANIM ── */
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(8px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.page.active > * { animation:fadeIn 0.3s ease both; }
+.page.active > *:nth-child(1) { animation-delay:0.04s; }
+.page.active > *:nth-child(2) { animation-delay:0.08s; }
+.page.active > *:nth-child(3) { animation-delay:0.12s; }
+.page.active > *:nth-child(4) { animation-delay:0.16s; }
+
+@media(max-width:1100px) {
+  .kpi-grid { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="logo-wrap">
+      <img style="height:38px; object-fit:contain; mix-blend-mode:multiply;" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADtBAcDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAYHBAUIAwIB/8QATRAAAQMCAgMMBAoKAgEDBQAAAAECAwQFBhEHEiETFCIxQVFhcYGRobEyksHRFRYjQlJTVWJyojM0NkNzg7KzwuEkgvBjk/EXNVR0o//EABsBAQEAAgMBAAAAAAAAAAAAAAABBQYCAwQH/8QANhEBAAEDAQMHCwUBAQEAAAAAAAECAwQFESExEhMiQVGh4QYUMlNhcYGRsdHwFRYzUsFC8TT/2gAMAwEAAhEDEQA/AOMgAAAAAAAAD1paeeqmSGnifLIvE1qZliJqnZCTMRG2XkfTGPkejGNc5y7EREzVSW2nBznIklym1f8A0o129q+7vJTQW+ioGatJTxxbMlVE2r1rxqZzF0DIu9K50Y7/AJMRk6zZtbqOlPcgVDhi71WTnQJTtXlmXLw4/A3VJgqBMlqq2R68qRtRviuZLQZ6zoWJb9KOVPt8GHu6xk3OE7Pc0tPhiyxZZ0qyKnK96r4cRmx2m1x5alvpUy5ViRV7zNBkKMSxR6NER8IeGvJvV+lXM/F4No6RqZNpYETmSND8dRUTvSpKd3XGhkA7ebo7IdfOVdrXy2W0yJk63UyfhjRvkYNThOzy+hFLCvPHIvtzN8Dprwse56VEfKHbRl36PRrn5oZWYKema0da1eZsrcvFPcaOvsN1os1lpHuYnz4+EnhxdpZ4Mbf0DFuehtpn87Xvs61kUel0lOgtC52O23BFWenRsi/vI+C7/faRK8YTraXWko131Em3JEyenZy9nca/l6Jk4/Sp6Uez7M1javYvbqujPt+6OA/XIrXK1yKipsVF5D8MOygAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP1rXOcjWornKuSIibVUm2GcLthRtXcmI6XjZCu1G9K869B7MLBu5lfJtx756oeXKy7eLRyq/l2tPh/DVTcNWeo1qemXaiqnCenQntJzbrfSW+HcqSFsacq8ruteUygbvg6bZw46Mbau384NSy8+7lT0p2R2AB+OVGtVzlRERM1VeQyDwv0GiuWKbXSKrInuqpE5I/R9bi7syO12L7lNmlO2Kmb0JrO712eBjMjWMSxumrbPs3+DIWNLyb2+Kdke3d4p+eUtTTQrlLURRr956IVZU3Gvqf09ZPInMr1y7uIxTFXPKWP+LfzlkqNBn/uv5Qtdlytz3oxlfSucvEiTNVfM/G3S2OXJtxpFXmSZvvI3gC15I66TN482Q5+LvZ3moxha/g65q+NuVPPm9mXEi8rf/Oc9VzU8mjFpyZojZP06p+P2eajT8evImxFc7Y+vXH57ViRSxSpnFKx6fdcin2U81VaubVVFTlQz6W83WmVNyr58k4kc7WTuU81vylon07ez3Tt+zvuaDVHoV/OFpAg9BjOqYqNraaOVvK5nBd7l8CSWu/Wy4ZNhnRki/u5OC73L2GXxtUxcjdRVv7J3MZf07Isb6qd3bG9tAAZB4mrvVjobo1VkZuc+WyVibe3nIFerPWWqXKdmtEq8GVvor7l6C0TznhiqIXQzRtkjemTmuTNFMTn6RZy4mqN1Xb92SwtTu408md9PZ9lQgkeJ8NyW/WqqNHSUvG5ON0fvTpI4aTk41zGrm3cjZLbbGRbv0cuidsAAOh3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH61rnORrUVzlXJERNqqfhNsFWJImNudWz5RyZwsX5qfS6+Y9mDh15d2LdPxnsh5cvKoxrfLq+HtZOFMPsoI21dWxHVbkzRF4ov99JIwD6BjY1vGtxbtxuaVfv1365rrneA+ZHsjYr3uRrWpmqquSIhCMSYpkqFdS21yxw8TpeJz+rmTxOrNzrWHRyrk7+qOuXZiYdzKq5NHxlvb7iSjtutDH/AMipTZqNXY1elfYQi63evub1WpmXUz2Rt2MTs95gA0rN1W/lzsmdlPZH+9rbMTTrONG2I2z2/nAABjXvDMs1DJcrjFSR5prLm530W8qmGWBge17zt++5W5T1CZpn81nInbx9xkNMwpy78UTwjfPu8Xi1DKjGszVHGeDfU8MdPAyCJqNjjajWpzIhhYgtzbnbJKfYkicKJy8jk/8AMjYg3+5aouW5t1Runc0ui5VRXFcTvhT8jHRyOje1Wuaqo5F40U+SVY+te41LblC35OVdWXLkdz9vn1kVPnOZjVYt6q1V1fRvOLkU5FqLlPWAA8z0N3ZsS3C3qkb3b5gT5ki7U6l5CcWe7UV0i1qaThonCjdsc3s9pVh6QTSwTNmhkdHI1c2uauSoZjB1m9jTFNXSp7PtLF5mlWsjpU9Gr84reBGsM4mZWq2krlbHUrsa/ibJ7lJKbnjZVrJo5dudsNVyMe5j18i5G9+KiKioqIqLsVFINi7D29M66hjXe67ZI0/d9KdHkTo/HNa5qtciOaqZKipsVDrzsG3mW+RXx6p7HZiZdeLc5VPDrjtU8DfYusi22p3xTtXekq7PuL9H3GhPn2Rj149ybdcb4brYvUX6Iro4SAA6XaAAAAAABlWy31tzqt7UFO+om1VdqM48k4wMUG++JuKPsWq7k94+JuKPsWq7k94GhBvvibij7Fqu5PePibij7Fqu5PeBoQfr2uY9zHIqOauSovIp+AAAAAMq2W6tudTva300lRNqq7UYma5JygYoN98TcUfYtV3J7x8TcUfYtV3J7wNCDffE3FH2LVdye8fE3FH2LVdye8DQg9q6lqaGrkpauF8M8a5PY5NqHiAAAAAyrZbq251O9rfTSVE2qrtRiZrknKBig33xNxR9i1XcnvHxNxR9i1XcnvA0IN98TcUfYtV3J7x8TsUfYtV3J7wNCAAAAAAAAAba24av9xRFo7TVyNXierNVq/8AZ2SAakE0pdGeJ5kRZGUlNnySTZ5eqima3RTetVNa4W9F5URXr/iBXwLBdopvWqurcLeq8iKr0/xMGr0aYnhRdzjpKn+FPln6yIBDAbW5Ycvttarq21VcTE437mrmJ/2TNDVAAAAAAAAAAAAAAAAAAZtttNzuS5UFvqannWOJXInWvEhIaPR1iqoRFfRxU6L9bM3yTNQIiCfx6Kr6qZyV9uavMjnr/iff/wBKbz9o0He/3AV6Cc1Gi/EcSKsctBPzIyVyL4tQ0twwZiehRXTWeoc1OWHKXt4KqBoAfUjHxvVkjHMc1cla5MlQ+QAAAAAAAAAB+sa572saiq5y5IicqgfgN98TcUfYtV3J7x8TcUfYtV3J7wNCDffE3FH2LVdye8fE3FH2LVdye8DQg33xNxR9i1XcnvNXc7fW2yqWlr6aSnmREdqPTJcl4lAxQAAAAAAAAbyLCOJZYmSx2aqcx7Uc1dVNqLxH18TcUfYtV3J7wNCDffE3FH2LVdye8fE3FH2LVdye8DQg33xNxR9i1XcnvMC72a6WncvhKilpd1z3PXT0sss8u9O8DAAAAAAAbC02W63ZsjrbQy1KRqiPViejnxeRnfE3FH2LVdye8DQg33xNxR9i1XcnvHxNxR9i1XcnvA0INzWYXxBR0z6mqtVRFCzLWe5EyTNck8VAGmAPSlgkqaiOnhbrSSORrU6SxEzOyEmYiNst1g6z/CNbu87c6aFc3IvE93I33/7LEMS00UVuoIqSLiYnCX6S8qmWfQtMwYw7MU/9Tx/PY0nPy5yrs1dUcA+ZHtjY573I1rUzVV4kQ+iDY2va1ErrbSv+RYvyrk+e7m6k8zszs2jDtTcq49UdsuvDxKsq5yKfixcVX99ykWmplVlI1epZF516Og0AB8/yMi5kXJuXJ2zLdbFiixRFFEbgAHQ7gA/WorlRrUVVXYiJygbbCts+E7o1r25wRcOXpTkTt95ZSIiJkmxDWYZtiWy1sicibs/hyr083ZxG0N/0jC81sRyvSnfP2+DS9Ty/Ob270Y3R9wAGUY54V9LFW0ctLMmbJG5L0cy9hVdwpZaKslpZkyfG7JenmXtLbItj217tTNuMLflIU1ZMuVvP2GC13B5+zztMdKn6eHFmdHy+au83Vwq+qDAA0ltgAABNsIYiWdWW+uf8rxRSqvpdC9Pn5wkIqouabFPZhZtzEucuj4x2vLl4lGTb5FXwnsXECP4PvfwjTb2qHf8AKiTjX57efr5yQH0DGyKMi3FyjhLSr9iuxcm3Xxh41tNDWUslNO3WjkTJU9vWVdd6GW3V8lJNtVq8F3I5vIpa5H8bWvf1tWpibnPTorky+c3lT2//ACYzWsDzizzlMdKnvjsZDSczmLvIq9Gr6q9ABozbwAAAAAN3gWv+DcXW2qV2qzdkjeq8SNfwVXuXPsNIfqKqLmmxQOoQa7DVel0w/Q1+aK6aBrn/AIssnJ35mxDkAADnzSDQ/B2MblAjcmOlWVnNk/he3LsNAWNpzodzu1BcGt2TQrE5elq5+TvArkOIAABZ2gqhzmuVzc30WtgYvXwneTSsS99FFDvHBVK5W5PqXOnd2rkn5UaCErAAcgAAUtppot74sZVonBqqdrlX7zeCvgjSDFvacqLdbJQ17UzWnnWNehr097U7yoQ4gAAFnaCaHOa5XJyei1sDF611neTSsS9tE1DvLBVM5UyfUvdO7tXJPyogISwAByDSY5uHwZhK41aOyekKsYv3ncFPFczdlc6crhudqoba122eVZXoi/NamSeLvAIqMABAAy7Tb6y618VDQwulnlXJrU5OleZE5wMaNj5JGxxsc97lya1qZqq8yIWBhXRlXVrW1N6ldQwrtSFmSyr18jfFehCb4IwZQYdhbM9G1NxcnDnVNjehicidPGvgSkLsaayYXsNnRq0VuhSVv716a8nrLxdmRuQAoAAAAAGjvuE7DeWuWst8SSu/fRJqSZ8+acfbmbwAU3inRpcaBr6m0SLX06bVjVMpWp1cTuzb0ECe1zHqx7Va5q5KipkqKdQkUxvgqgxDE6oiRtNcUTgzImx/Q9OXr406eIJsUQDKutvrLXXyUNdA6GeNcnNXzReVOkxQgAAAAAA/Wtc5yNaiucq5IiJtVS2NH+j2OBsdzv8ACj5l4UVK7a1nS/nXo4k5egIhhPA14vyNnVu86Jdu7yt9JPut4169idJZ9gwHh21I160iVs6cclTk7b0N4k7s+klCIiIiImSJxIfoV+Ma1jUaxqNamxERMkQ/QAoAAAAAwbtZ7XdYtzuNDBUpyK9vCTqXjTsK/wAS6LY3NfPYalWu497zrmi9TuTt7yzgEczXKgrLbVupa+mkp5m8bHpl2pzp0oYx0diOw22/0S0twgR+We5yN2PjXnavs4lKOxlhiuw1X7jUfK08mawztTgvTmXmXoCNEAAAAAGxwxDvjElsgyzSSriavVrpma4kWjWHd8cWtipnlKr/AFWq72AdAAAOQAABVunS3ZPt92Y3jRaeRfzN/wAi0iO6SLd8JYNr4mtzkiZu7Otm1fDNO0I5/AAQAAA2WFrct2xDQ2/LNs0yI/8ACm13gimtLE0H23drzV3N7eDTRJGxfvP/ANIveBbqIiIiImSJxIfoAcgAACttO0OtbrZUZehM9mf4kRf8SySDaa4d0whHJltiq2Oz62uT2hJUsAAgAALW0D/ql2/iReTizCs9A/6pdv4kXk4swLAAArQaQf2Qrv5f9xoGkH9kK7+X/caAkufCXaPbdryyXKRuxnycWfPyr3bO1SJMa570Y1FVzlyRE5VLWs9G2gtsFI3LONiaypyu41XvzM5oOLz2RzlXCn69TDazk81Z5Ecavp1ssA/HKjWq5yoiImaqvIbu1JpMYXZbbbtzhdlUz5tZlxtTlcVybDEFwdc7pLUr6GerGnM1OL39prz59qubOXfmY9GN0ff4t207EjGsxE8Z3z+ewABjXvAAAJLgS176rlrpW5w068HP5z+Tu4+4j9JBLVVMdPC3WkkcjWoWnaqKK30EVJFxMTav0l5VM5oeDz97nKo6NP16mI1fL5m1yKeNX0ZQAN3aiAAAfL2texzHtRzXJkqLxKh9ACrsQ251suclPku5rwolXlavF3cRriyMX2v4RtiujbnUQZvj51Tlb2+aIVufP9VwvNL8xHozvj7fBuum5fnNmJnjG6fz2gAMYyAAAPehqpqKrjqoHZSRuzTp6OotK2VkVfQxVcPovTNU+ivKhUxKMAXHca19vkd8nPwmZ8j096eSGd0LNmze5qqejV9fzcw+sYnO2ucp40/ROgAbs1JWOKLf8G3eWJrcon/KRfhXk7FzQ1ZPsfUO+LU2ra3N9O7NfwrsXxy8SAnz7VcXzbJqpjhO+Pi3bTcjzjHiqeMbpAAY17wAAAABc2hSv3xhiahc7N1JOqInMx/CTx1ieFMaFbhvbE8tE52TayBUROd7eEnhrFzhYAAFQvTHQ77we6oambqSZkvTkvBX+pF7CkTpW+USXGzVlAuX/IgfGmfIqpsXvOa3NVrla5FRUXJUXkCS/AAEelNDJUVEdPEmckr0Y1OdVXJDpegpo6OhgpIv0cETY29TUyTyKK0YUO/8a0DVbmyByzu6NVM0/Nql+BYAAFAABodINF8IYNuUCNzc2FZW9bOF7Dns6gkY2RjmPRHNcioqLyoc0XWkdQXSqoX7XU8z4lXn1VVPYEljAAI+4I3zTMhjTWe9yNanOqrkh0vbaVlDbqaij9CCJsbepqInsKI0bUO/8aW6NUzZFJuzujUTWTxRE7S/wsAAChRul64b9xlNC12bKSNsKdfpL4uy7C7qiaOnp5J5XascbFe5eZETNTmm41UldcKitl9OeV0juty5+0JLHAAR6U8MtRUR08EbpJZHI1jGptcq7EQvnAOF4MN2tEejX18yItRLzfcToTxXb1RHQvh1rtfENVHnkqx0qLz8Tn+xO0tMLAAAofE8sUELpp5GRRsTNz3uRGtTnVVPO4VdPQUM1bVyJHBCxXvcvIiFD41xbXYjrHIrnw0LF+Sp0XZ+J3O7y5Aix73pMsVC90VEya4SJyx8GP1l9iKRyo0sXFzv+PaaWNvM+Rzl8MiuAE2rJpdLNY1yb6s9PInLucqsXxRSV2DSFh+6vbDLK+gncuSNqNjVXocmzvyKLANrqFFRUzTah+lKaPccVFnnit9yldLbXLqo5210HSn3eju6bqY5r2NexyOa5M0VFzRU5wr9AAVGNIGFocR2xVjRrLhA1Vp5OLP7i9C+C9pQ88UsE8kE0bo5Y3K17HJkrVTYqKdPlU6acPtimjxBSsybKqR1KInzsuC7tyyXqTnCSrMABAAkujnD/wAYMQsjmbnR0/ytR0pyN7V8MwJjolwg2OKPEFyizkdwqSNyein1i9K8nfzFmH41Ea1GtREREyRE5D9CgAChGMQ45w/ZnuhkqXVVQ3YsVOmsqLzKvEnfmQvSZjieeqms1nmWOnjVWTzsXbIvK1F5G+fVx1wE2rMrdLNQrlSjs8TG8iyyq5V7ERDwi0r3RHfK2uje3ma5zV81K6ARclm0o2aqe2O4U09A5fnZ7oxOtUyXwJxR1NPWU7KiknjnhembXxuRyL2ocxm7wniW44crkmpJFfA5flqdy8CRPYvMv/wF2uhwYFgu1HerXFcKJ+tFIm1F9JjuVq9KGeFDCvdro7xbZaCuiR8MidrV5HIvIqGaAOcsU2SqsF4lt9SmaN4UUmWyRi8Tk/8AOPM1Re+k3DyX2wPkgj1q2kRZIck2uT5zO1PFEKIDiAAATTQ1DuuNGP8AqqeR/k3/ACIWWJoLh1r3cKjL0KZGes5F/wAQLeAAcgAAD8e1r2q1yI5qpkqLyofoA5sxDQLa75W29c8oJnMbnytz2L2pkYBPdNlu3tiOC4Nbkysh4S872bF8NUgQcQAAC9dE9t+D8G073Nykq3LUO6l2N/KiL2lKWmjkuFzpaGL06iVsadGa5ZnSlNDHT08dPE3VjiYjGJzIiZIFh6AAKAAARfSpFu2BLjlxs3N6dkjc/DMlBp8aw7vhG7R5ZrvSRyJ0o1VTyCOdQAEAABa2gf8AVLt/Ei8nFmFZ6B/1S7fxIvJxZgWAABWg0g/shXfy/wC40DSD+yFd/L/uNASVK4OpN936DWTNkWcruzi8ciySIaOKfKOrq1TjVI2r1bV80Jeb1oNnm8SKuuqdv+NO1m7y8maezcGixvXLSWV0TFykqF3NOr53hs7TekA0gVW7XhtMi8GnjRMvvLtXwyO7WMjmMSqY4zu+fg6tLsc9k0xPCN/y8UcAB8/bqAAAAZtloJLlcYqRmaI5c3u+i1ONTnboquVRRTG+XGuuKKZqq4Qk2ALXqsddJm7XZshz5uV3s7yXnxBFHBCyGJqNYxqNaiciIfZ9GwsWnFsxbj4+9ouXkTkXZuT+QAA9TzAAAAAAV3jS17wuSzxNygqFVyZcTXcqe0sQwb5b2XO2yUrskcqZxuX5rk4lMdqmF53YmmPSjfH57Xu0/L82vRVPCd0qrB9zRvhlfFI1WvY5WuReRUPg+fTExOyW7xO3fAACAfcEr4ZmTRu1XscjmrzKh8AsTMTthJjbGyVt2+pZWUUNUz0ZWI7Lm6D3I1o+qlltUlK5c1gfs6Gu2+eZJT6Th3/OLFFztjv62h5Vnmb1Vvsl5VULKimlp5PQkYrHdSpkVLPE6GeSF6ZPjcrXJ0ouRb5W2M6fe+IJ8kybLlInam3xzMJ5R2dtui7HVOz5/wDjLaFd2XKrfbG35NMADUGzgAAAADYYbrltl/oa/PJIZ2ud+HPheGZ0iioqIqLmi8SnLx0NgO4fCWEbdVK7N+4pG/8AEzgr5Z9oWG8AAUOesfUPwfjC506N1WrMsjU5Mn8JPM6FKh05UO5XmhuDW5NqIVjd+Ji+5ydwSVdgAIs7QVQ5zXK5ub6LWwMXr4TvJpahFNFFDvHBVK5W5PqXOnd2rkn5UaSsKAHlVVEdNEkkq5NWRkfa5yNTxVAr1AAAorS3RbzxrUvRMm1LGTN7UyXxapepWGnaizittyanE58D16+E3ycElVgACLK0FUOvXXG4ub+jjbCxfxLmv9Kd5bBD9ENDvPBkMrkyfVyvmXnyz1U8GovaTAKAAKi+lK4bwwXW5OyfUZU7dvHrcf5UcUKWdp1uGc1utbXei11RInXwW+Tu8rEOMhk2yjmuFxp6GBM5Z5Gxt61XLMxid6FbalViaWve3NlFCqp+N3BTw1gLetdFBbrdT0NM3VhgjRjU6E5V6eUyQA5AAAq/Tde1RKewwPyRUSeoy5fot817irTbYwuC3TE9wrVdrNfM5GfgbwW+CIakOIAAAAAFzaGb0+vsUtsnfrS0LkRirxrG7PJOxUVOrIpkmehytWlxlHArsm1UL4lTkzRNZP6fEC7wAHIMO92+G62mqt06Isc8asVeZeRexcl7DMAHMVZTy0lXNSzt1ZYXujenM5FyU8iY6X7elFjCSZjcmVcbZky4tb0XeKZ9pDg4he+iyzJacKwyPZlUVmU8i8uSpwU7E8VUpnDNvW64gobflm2aZrX/AIc83L3Ip0g1Ea1GtREREyRE5AsP0ABQjWki9rY8LzyxO1amf5GBU40VU2u7EzXryJKU9pvuKz32ltzXcCmh13J996+5G94RXwACAAAAACd6Gr0+ixAtrkeu961FyTPY2REzRe1EVO4uc5mtdW+hudLWsz1oJmyJl91UU6XY5r2Nexc2uTNF50Cw+gAFCgdJNnSzYrqYomatPP8ALwoibER3GnYuadxfxXOnK3pLaaK5tThQSrE7L6Lkzz7Fb4hJVGAAgWroHhypbtUZek+JiL1I5faVUXPoSh3PCc8qptlq3Ki9CNannmFhOwAFADHttWyuoYqqP0XptTmVNip2KigZAAAhWmO3b8wktU1uclHK2TZ9FeCvmi9hSR0zdKSOvttTQy+hPE6NejNMszmqphkp6iSnlbqyRPVj05lRclCS8wAETjQzbd94qdWvbnHRRK9F++7gp4ay9hdRBtDFt3phZ1a9uUlbKrkX7jeCnjrL2k5CgACgPKnqIqhZUidrblIsbl+8iIq+Z6gDHuUO+LdU0+We6xOZ3oqGQAOXQZN0h3vc6qnyy3KZ7MupyoYwcQAAWtoH/VLt/Ei8nFmFZ6B/1S7fxIvJxZgWAABWg0g/shXfy/7jQNIP7IV38v8AuNASUCwPDuWHYXZZLK5z178vYbwwMOs3OxULeeBru9M/aZ59KwqORj0U9kR9Gg5VfLv11e2Qqi8z75utVPnsfK5U6s9ngWlVyblSzS/QY53chURgPKW5ut0e+WZ0GjfXX7oAAao2QAAAsHBFr3lbt9StynqERdvG1vInt7iLYTtfwldGpI3OCHhydPMnb7ywa2to6GPXqqiOFvIirtXqTjU2bQcSmnblXN0Rw298/wCMBrOTM7Me3vmeP+QyQRWvxnTR5toqZ8y/Seuq3u4/I0VZim8VCqjZ2wNXkibl4rmplb+uYlrdE8qfYxtnSMm5vmNnvWOeElXSRrlJUwsX70iIVXUVlXUZ7vUzS5/TeqngY6vyl/pb+c+D3UaB/avu8VrfCtr+0qP/AN9vvDbpbHLk240irzJM33lUg6v3Jd/pDt/Qbf8AeVvRTwS/opo5PwuRT0KdMumudwpstwrahiJyI9cu7iO635Sx/wB2/lLpr0Gf+a/nC1wV/R4vukOSTpFUt5dZuqvenuN9b8XW2oVG1DZKV6/S4Te9PcZOxrOJe3crZPt3eDH3tKybW/k7Y9n5tazH9r1JG3SFvBfk2bLkXkX2d3ORItmVtLcqF8euyaCVqtVWqip2KVfc6OWgr5aSX0o3ZIv0k5FMBruFFq5z9Ho1fXxZvR8vnLfM18afp4MYAGAZkAAEk0fT7neJIVXZLEuzpRUXyzJ8VlhKTcsRUbs8s3q3vRU9pZpu3k9c5WLNPZM/dqet0cnIie2AhOkeHKqpKjL0mOZ3Ln/kTYi2kZmdvpZMvRlVven+j061Ry8Kv2bPq8+lV8nKp/OpBgAaA3QAAAAAC29Blfulrr7a522GVJWIvM5Ml8W+JUhMNEVfvLGcMTlyZVxuhdzZ+kni1E7QLyAAcghWmWh31hBalrc3UkzZM+XVXgr/AFIvYTUwb/RJcbHW0KoirPA9jehVTYvfkEc1npTxPqKiOCJM3yPRjU51VckPhUVFyXYpI9GdDv8Axrb2OTNkL1nd0aiZp45BF70FNHR0MFJF+jgibG3qamSeR7gByCIaWLituw3A9qrrPrYtifdXX82oS8qzTvV5y2uhReJJJXJ15Ink4ItJqo5qOauaKmaKfpqsI1W/cL2ypzzV9LHrL95Goi+KKbUKEW0q0W/cE1io3N9OrZ29Gqu38quJSeFfTMrKGopJPQnidG7qciovmBzIfTGue9rGJm5y5InOp+zxPgnkhkTJ8bla5OZUXJTcYEpN/YwtdOqZpvhr3JzozhL4NDivyz0bbfaaShZllTwsj2cuSImZlgByADEvNa23Wirr35ZU8LpMl5VRM0TtAorSRcPhHGdwka7NkUm4M6mbF8UVe0jp9SPdJI6R7lc5yqrlXlVT5DiFyaEKRIcNVNWqcKoqVTPna1ERPFXFNl+6MIUgwNbW5bXNc9enN7lCwkoAChg3+pWisdfVouSw00kiL0o1VQziP6RpFiwRdHJyw6vHzuRPaBz6AA4gAAAAAbfBc602LbVMi5IlXG1V6FciL4KpqDItkixXKllTPNkzHbF5lQDpoAByAABWenalRaO2VqJtZI+JV60RU/pUqkuzTREkmDddf3VVG5NnQqe0pMOMpzoVo0nxa+pcmymp3OReZyqjfJXF0lX6B4Uyu1QvH8kxPzKvsLQCwAAKHPekGpWrxpdZVXPVqFi9Tgf4nQhzPeJd2u1ZNnnuk73d7lUJLFAAQAAAAADo3CM61OFrXOq5udSR6y9OqiL4nORf+jR+6YGtbs0XKNzdnQ9yewLCRgAKEf0jUqVmCrpHlmrId1To1FR3sJAYl5i3e0VkGWe6U72d7VQDmgABxC+NE8O44FoVyyWRZHr67kTwRChzonA8O4YPtMfPSRu9ZNb2hYbkABQhuia4rWWOrp3qmvTVkiZJyNcusniriYSvSOJ8ipmjWquXUU9oSuCwYiqaB7l1auHWTpexc08FcEXGAAoURpWt3wfjOqc1uUdUiVDf+2x35kcXuVxpyt26WyhujG7YJFieqJ81yZpn1Kn5gkqkPSniknnjgibrSSORjU51VckPMleim2/CGMqZzm5x0iLUO2crdjfzKncEXbaKOO3WuloIvQp4mxovPkmWZlAByD4mkZDC+WRyNYxqucq8iJxn2RbSlcvg7BtXqu1ZKrKnZ063pflRwR56LK91ysNXWP8ASkr5nqmfFrKjsvzEtK90GS54frofo1et3san+JYQAABXO2OYdwxhdmc9XI71lz9ppiVaV4dyx3XrlkkiRvT1G5+KKRUOIAALW0D/AKpdv4kXk4swrPQP+qXb+JF5OLMCwAAK0GkH9kK7+X/caBpB/ZCu/l/3GgJKKWhES1UiJsRIGZeqhlGJZ3a1oo3ZZZ07F/Khln0+z/HT7ofPbvpz72He1VLNXKi5KlPJl6qlUlr3hqvtFYxON0D0/KpVBqvlJ/JR7pbHoP8AHX7wAGtM8AADbUl7nobclJQMSFzl1pZl2ucvRzIayaWSaR0s0jpHu43OXNVPg+o2PlejI2Oe9diNamaqd1d65ciKZnbEcIdVFq3bmaojfPGXyCRW3CVxqUR9SrKVi8jtru5PapIaHCdpp8llZJUu55HZJ3J7czIY+i5d7fyeTHt3d3F4r+q41rdt2z7PzYrwyYqCulTOKiqZE+7E5fYWlTUlJTJ/x6aGL8DEQ9zKW/Jr+9z5Qx1evf1o+cqs+Bbt9nVP/tqHWe6oma26q7IlUtMHd+27P957nV+vXf6wqOalqoP01NNFl9Nip5niXEYdVa7dVIu70UD1Xl1ERe9Np57nk1P/ABc+cO+3r0f90fKVUgnlfg6hlzdSTSU7uZeG3x2+JG7phy6UGb1h3aJPnxcLvTjQxOTpOVj76qdsdsb2Ssalj391NWyeydzX0NbV0Uu60k74ncuquxetOJTLvF1W6xRPqYWtqo+CsjNiPb0pzovmprAeOm/cpom3E9Gep6ps0TXFezfHWAA6XaAADOsDtW+UKp/+QxO9yFqFWYebr32hTLP5di9y5lpm4eTf8Nfv/wAaxr38tHuCNaRP/skP/wCy3+lxJSNaRFT4GhTlWoT+lxk9V/8Ajue5jtO/+qj3oEAD543gAAAAADIt1VJQ3CnrYvTglbI3raufsMcAdPU8sc9PHPE7Wjkaj2rzoqZoehGNF1fv/BVErnZvp0Wnd0avo/l1SThyAABzpjOj+D8V3OlRMmtqHOanM1y6yeCoTLQVR69yuNwVP0UTYmr+Jc1/pTvNdpppNwxc2oRNlTTseq/eTNvkiEx0K0m4YSfUKiZ1NS5yL91ERqeKKETkABQo3S/V76xtPGi5pTRMhTu1l8XKXkc2YjrPhC/19ai5tmqHvav3VcuXhkElcOh2r3zguKJVzWmmfF46yf1EyKs0E1uUtztzl42smYnVm13m0tMAAArn3SLSbyxrc4kTJHzbqn/dEd7Td6E6TdsUzVSpwaamcqL95yoieGseunCk3LEVJVomST02qvS5rlz8FQ3Wgqk1LXca5W/pZmxIv4Uz/wAwiyAAFCFaZLhvTCK0rXZPrJmx5fdThL5InaTUp7TfcN3v9Lb2uzbSw6zk5nPX3I3vCSr4ABA6IwKiNwdaURMk3qxfA53Oh8BvR+DbSqZ/qzE29CZewLDdgAKEW0rfsDcv5X91hKSL6VUV2ArkiJnsiX/+rAihQAEAAAAAA+onrHKyREzVrkXLqPk9KZqOqYmuTNFeiKnaB08AA5AAAiOl39hav+JH/WhRZeWmB6NwPUNy9OWNPzZ+wo0JK3dBbFSy3CTPYtSidzU95YpXGgp+dpuUetxTtXLmzb/rwLHAAAKHMEr90lfJllrOVcus6fOYKhqMnkY3ia5UTvCS+AAEAAAAAAvnRT+wNt/m/wB15QxfWitqtwFbEcmS5SL3yvULCUAAKH49qPYrHJm1yZKh+nlVyblSzS62rqMc7PmyQDmIABxDpq2w72t1NT5ZblCxmXUiIc3WqFKm6UlOqZpLMxne5EOmQsAACsG/ybjYbhNs4FLI7b0NVTn3C9wW1Yhobhnk2GZqv/Cux3gql7Y5l3LB12dnlnSSN70y9pzuEl1CioqIqLmi8Sn6R/R5cvhTB9BO52ckce4yc+szZ4oiL2kgChqMZ274VwvcKFG5vfCro0++3hN8UQ24A5dLd0HW7cbRWXN6cKolSNn4WptXtVfArrGlu+C8U3CiRuqxsyujT7juE3wVC9cIW/4Lwzb6HV1XRwor0++u13iqhIbUABQqLTjct2utHa2O4NPGssiJ9J3F3In5i3HuaxqucqNaiZqq8iHN+Jri67X+tuKquU8qqzPkbxNTuRAkrC0DScC7wrlsWFyfnRfJCzyo9BUmV4uMO3hU7XdzsvaW4CAABVL6bIdzxdFIibJaRjs+lHOT2IQUsrTvDq19rqMvTikZn+FUX/IrUOIAALW0D/ql2/iReTizCs9A/wCqXb+JF5OLMCwAAK0GkH9kK7+X/caBpB/ZCu/l/wBxoCSheF5N0w/RO5o9XuXL2GzI9gGbdLFuee2KVzexdvtUkJ9IwK+cxrdXshoWZRyMiun2y+ZWJJE+NeJzVRe0qF7VY9zHbFauSlwFX4mp97X6sjyyRZFenU7b7TCeUlvbRRc7JmPn/wCMvoNzZXXR27J+X/rWgA1JsoD7hikmlbFExz3vXJrUTaqk6w3hmKjRtTXNbLU8bWcbY/ep7sHAu5lfJo4dc9jyZebbxadtfHqho7FherrkbNVKtNTrtTNOG5OhOTrUmtstlFbotSkgaxeV67XO61MwG64WmWMSOjG2rtnj4NTy9QvZM9KdkdgADIPCAAAAAAAAAADUXnD1vuSOerNxnX96xPNOJSD3qy1tqf8ALM14VXJsrPRX3KWefMsbJY3RyMa9jkyc1yZoqGJztHsZUTVHRq7Y/wBZPD1S7j7p309n2U+CVYmww6mR9Xbmq+FNr4uNWdKc6EVNLysS7i18i5Hi2vHybeRRy6JAAeZ3txgyLdcR02zNGazl7Gr7ciyiD6OafWrqmpVNkcaMTrcv+icG8eT9vkYnK7Zmf8/xqOtXOVk7OyI+4RPSRJlS0cX0nud3InvJYQXSJNr3OCBFz3OLNehVX/SHbrdfIwqvbsjvdWk0crKp9m36IuADQm5gAAAAAAALQ0FXDh3G1udxo2oYn5XebC0igdGlf8H40oHquTJnrA7p10yTxyL+CwAAKrLTvS501rrET0XyROXrRFTyUmOAqXeeDbVDlkq07ZFTLLa/hL/UarS/Ruq8HrqNzdFUxOTrVdT/ADJbTRNgpooGejGxGN6kTII9AAFazFdb8HYauNZnk6OnerF+8qZN8VQ5wLq00Vu98IpTNXhVVQ1ip91M3L4ohSoSUp0V128sbUes7JlQjoHdOsmz8yNL5OY6KokpKyCqiXKSGRsjetFzTyOl6WeOppYqiJc45WI9q86KmaAh6gAKrvTpS69koKxEzWGoWPqR7c/8EN1oopd64HolVMnTK+V3a5UTwRD60qUu+sD1+SZui1JU7HJn4Zm6sFLvKx0FHlksNPHGvWjURQjOAAUOcsXXD4UxNcK5HazZJ3ai5/MTY3wRC9sZXD4Mwtca1Har2QK1i8z3cFviqHOgSQABAvjRROk+BaFM+FEskbux6qngqFDlt6C61H2q4W9XcKKZJUTocmX+PiFhY4AChoNIcW7YKurOaBX+qqL7DfmJeKZa20VlGnHPA+L1mqntA5oB+qiouS7FPwOIAAAAAGbYYt3vlBBlnulTGziz43IhhEh0c0y1eNrXHlmjJt1Xo1EV3sA6BAAcgAAQDThOjMM0sHLLVovYjXe1UKcLI061iPuduoEX9FC6VyfiXJP6fErcOMrN0EVCJU3WlVdrmRyInUrkX+pC1SjdEFalJjSGNyojaqJ8K58+Wsni1E7S8gsAAChzVfYlgvlfAqZLHUyMyyy4nKh0qc/aSKXemNrnHlkj5d1Tp10R3tCSjwACAAAAAAdB6PItxwVamc8CO9ZVX2nPh0vZ6bedoo6RUy3CnZH6rUT2BYZYAChrMVzpS4Yuc+eSspJFTr1Vy8TZkQ0u1qUmCqiNHZOqZGQt79ZfBqhFGAAI3eBIVnxlaWImeVUx/qrrew6HKI0TQ7rjqicqZpE2R6+oqeaoXuFgAAVGdKMm5YEubudrG8fPI1PaUGXhpjk1MEytzT5SeNvjn7CjwkrQ0F3LbcLS93HlURp+V3+JaRz5o+uXwXi+gqHO1Y3ybjJzar+Dt6lVF7DoMEAACq20hWJK3SDYHozNlYqMlRE40jXWd+VfAskx6ijhnq6WqenylM5zo15tZqtXwUyAgAAqNaS7n8F4OrZGuylnbvePrfsX8usvYUEWRpyuW6XGitLHcGGNZpET6TtiIvUifmK3DjKc6E5EZjCRuz5Sje38zV9hdJRWiSTUx3RN2/KMlb+Ry+wvULAAAqt9O0OtarbP9Cd7PWbn/iVKXXppi3TBzX/VVTH+Dm/5FKBxkAAFraB/1S7fxIvJxZhWegf9Uu38SLycWYFgAAVoNIP7IV38v+40DSD+yFd/L/uNASVUaOanVqqqkVfTYj29aLkvn4E2Ksw/WbxvFNUKuTUfk/8ACuxfMtM3byfv85jcjrpnunf92o61Z5GRy/7R9AgukSOJtyp5GvbujosntTjREXYvbmvcTG5VkVBRS1cy8CNM8udeRCra+qmraySqndm+Rc16OZE6Dr8ocmimzFnjM7/c7NEx66rs3eqO94H3FG+WVsUTVe96ojWpxqp8E7wTZUpqdtxqG/LytzjRfmNXl618jWsDCrzLsUU8OueyGezMunFt8uePUzMMWKK1wJLKjX1b04TuPU6E95uwD6BYsUWLcW7cbIhpV69XermuudsyAA7nUAAAAAAAAAAAAAAAAEOxhh5Ea+40EeWW2aJqfmT2oTEHlzMO3l25t1/Cex6cXKrxrnLo/wDVOgkmNLIlFPv6mZlTyrwmpxMd7lI2fPsrGrxrs26+MN2x79GRbi5RwlYGAI4m2RXse1z3yuV6JxtXiRO7b2kiK1wpdVtlybujsqeXJsqciczuz3lkoqKmabUN00XJovY0U07pp3T9/i1PVseu1kTVPCrfH57H6Vfiep31fquVFzaj9RvU3Z7CxbvVpQ2yoqlXbGxVb+LiTxyKpVVVVVVzVeNTHeUl/o0WY9/+R/r3aDZ31Xfh+dz8ABqjZAAAAAAAAH3FI+KVksbla9jkc1U5FTiOlbTWMuFrpa6PLVqIWyInNmmeRzOXfoer9+YPZA52b6SV0S8+S8JPPLsCwmYACsW6UbK+j3tJlqLJG9c+XVe13sMoAAAAKj051u6XegoEXZDCsqp0vXLyb4lckh0j1u/8aXKVFzbHLuLebgIjfNFXtI8HEL70XV2/sFUKq7N8CLA7o1V2fl1ShC09BNdnHcra53ErJ2J18F3k0ELPAAcnhX00dbQz0kyIsc0bo3Iqcipke4AAAAV5pxuG42SjtzXZOqZle5PusT3uTuKgJnpiuG/MYPp2uzZRxNi2Ls1l4S/1InYQwOIAABLdE90S24vgjkdlFWNWnd1rkrfFETtIkfUb3xyNkjcrXtVFaqcaKnKB1ADUYPvDL7h+muDVTdHN1Zmp82RNjk9vUqG3DkAADnjHNvW2YsuNLq6rN2WSPm1XcJPBcuw0hbWmqwuqKOG+07Fc+nTc6hET5irsd2Kq9/QVKHEAAAAACxdB1uWW8Vlzc3gU8SRtX7zl9zV7yvI2Oke2NjVc9yojWomaqq8h0FgKx/AGG4KN7USof8rUfjXjTsTJOwEN8AA5ABHdId6SyYXqZ2P1aiZNxg27dZ3KnUma9gFOY9uSXbFtfVsdrRJJucfNqt4KKnXln2miADiyLbVyUNwp62H9JBK2RvW1czpShqYqyigq4Ha0U0bZGLzoqZocxlxaF72lXZ5LNM75ajXWjzXa6NV9i+aBYWAAAoVHpytyxXWiujW8CeJYnqn0mrmmfWjvyluGhx5ZPh7DdRRMRFqG/KwZ/TTiTtTNO0I57B9SMdG90b2q17VVHNVMlRU5D5CAAAAADdYIt63TFdvpNXWYsyPk2fMbwl8Ey7TogrfQrYXU9JNfamNWvqE3KnRfoZ7XdqoidnSWQFgAAUKl05XJJbhRWqN2aQMWaRE+k7YidiIvrFq1dRFS0stTUPRkUTFe9y8jUTNVOccQXKW8XqquU2x08iuRv0W8SJ2JkgSWAAAieaEIdfFVRKvFHRuy61c1PLMuYqvQPDnPdqhU9FsTEXrVyr5IWoFgAAVAdOEmrhaljTPN9Y1V6kY//RTZbGneTKgtcWzhSyO4+ZE95U4cZfqKqLmmxTo7Clx+FsOUFwzRXTQpr5fTTY7xRTnAt3Qdcd2s9ZbHu4VNKkjM1+a9OJOpUXvCwsUABQAAD8VURFVVyRONT9I7pGuXwXg+uma7VllZuEfPm/Zs6kzXsApPFlyW74jrrhmqtllXc8/oJsb4IhqwA4t/o7l3LG1qds2z6u3pRU9p0Gc4YUk3HFFql28GsiVcubXTM6PCwAAKjGlKHdsCXFETNWIx6dj2qvhmUIdF4zh3xhK7RZZqtJIqJ0o1VTyOdAkgACLW0D/ql2/iReTizCs9A/6pdv4kXk4swLAAArQaQf2Qrv5f9xoGkH9kK7+X/caAkufCzMJ12/7LC9y5yRfJydacvamRWZucK3hLVVSrLmsMjFzRPpImbfd2mW0fMjFyOlPRndP+MZqmLORZ6Mb43w2GP7lu1Wy3Ru4EPCky5XLxJ2J5kWPSolfPPJNIub5HK5y86qfLGue9rGIqucuSInKp48zJqyr9Vyev6dT1YtiMe1FuOptcL2tbhcGOmblSxrrSOXiXL5ufOvlmWOksSJkkjET8SGpZYIFw421vyR+Wsr05JOf2dRXlVBLS1MlPOxWSRu1XIZ+m5Xo1qmJt7eVxnb19nDqYWqinVbkzFezk8I2dXbx61tbrF9Yz1kG6xfWM9ZCoAT9yz6vv8F/QI9Z3eK391i+sZ6yDdYvrGeshUAH7ln1ff4H6BHrO7xW/usX1jPWQbrF9Yz1kKgA/cs+r7/A/QI9Z3eK391i+sZ6yDdYvrGeshUAH7ln1ff4H6BHrO7xW/usX1jPWQbrF9Yz1kKgA/cs+r7/A/QI9Z3eK391i+sZ6yDdYvrGeshUAH7ln1ff4H6BHrO7xW/usX1jPWQbrF9Yz1kKgA/cs+r7/AAP0CPWd3it/dYvrGesg3WL6xnrIVAB+5Z9X3+B+gR6zu8Vv7rF9Yz1kG6xfWM9ZCoAP3LPq+/wP0CPWd3itqrbS1VNJTzOjdHI3VcmshV90opbfXSU0m3VXgu5HN5FQ98PWuS63BsCZpE3hSu5m+9SV43tUclojnp40atImSIifu+bs2L3nHKmvVMab/I5PI4b+Pb1dTlj8nT78WeXt5Xd2fNAywsEXJa2173kdnLTZN62/NX2dhXptMMXFLZdo5pFVIXIrJcuZeXsXIxek5fmuREzPRndP57GQ1LG84sTEcY3w3+kOvyjhtzHbXfKSdXInn3IQwyrrWSV9wmq5OOR2aJzJyJ3GKdWoZXnWRVc6ur3OzCx/N7FNHX1+8AB4nrAAAAAAAACxNB1w3K81tuc7JtRCkjU+8xfc5e4rs3OCa/4MxXbqxVya2dGvX7ruCvgqgdEgAOQAAB4V9Syjoairl9CCJ0jupqKq+R7kX0p1u8sE12S5Pn1YW9Osu38uYRRE8r5p5JpFzfI5XOXnVVzU+AAgSvRRXbxxrStV2TKlroHdqZp+ZGkUPagqZKOugq4v0kErZG9bVzTyA6cB5000dRTx1ES5xysR7V50VM0PQOQAAB8TSMiifLI7VYxqucvMicZ9ka0mV/wfguve12T5mpAzp11yX8usBRl3rH3C6VVdJ6VRM6RU5s1zyMUAOIAAAAAmeivEqWS8LR1cmrQ1io1yquyN/I7q5F7OYu85dLc0VYxbVwx2K6S5VLE1aaVy/pE5GL95OTn6+MsLGAAV8yxslifFKxr43tVrmuTNHIvGioU5jjR7W26aSsssT6uiVVcsTdskXRlxuTpTbz85coCOXnNc1ytcitci5KiptRT8OkLrYbNdFV1fbaad6/PcxEf6ybfE0U+jjCsjs20c0XQyd3tVQbFGHrS089VO2npoZJpXrk1kbVc5epELwp9HWFInIrqGWbJc/lJ3+xUJBbLVbbZGrLfQ09Mi8e5sRFd1rxr2g2ITo4wG62TMu15a1atu2GDYqRL9JV5XeXXxWGAAAAV+KqNRVVURE2qqlEaTMRpf76rad+tQ0uccGXE5fnP7cu5EJTpWxk3UlsFqlRyrm2rmavEnLGnt7ucqwJIAAgbHDd2qLHeae5U+10TuE3PY9q7Fb2oa4AdMWqvprnboK+kfrwzMRzV9i9KcRlFH6NMXLYKxaOte5bbO7hcu5O+knRzp/wCLd0b2SRtkjcj2ORFa5FzRUXlCvoABVfaRsBrdZX3WzNY2tXbNCq5JN0ovEjvBevjqWupKqhqXU1ZTy08zeNkjVaqd502Y1woKG4Q7jXUkFTH9GWNHIneE2OZgXxVaPsKTqrktywuXljmenhnkeEejbCzHZupqiROZ07svDIGxRxO8C4ArLnNHW3eJ9NQJwkjdwXzdGXGidPdzlo2nDVhtTkfQWumikbxSK3Wen/Z2am2BsfEMccMTIomNZGxqNa1qZI1E4kQ+wAoARbH+LafDlCsUStluMrfkYuPV++7o8+8IjWmXEjWxJh2kfm92T6tUXiTjazyVeznKrPSpmlqaiSonkdJLI5XPe5c1cq8anmEAABb+guHVsNfUZenVanqtRf8AIsMhuhyHcsExPy/TTyP8dX/EmQUAAVVOniTOrtMOfoxyuy61ansKzLA05SKuJaOLbk2jR3Hzvd7ivw4yEs0UXH4PxnTMcuUdW1ad3Wu1v5kTvImelPNJT1Ec8TtWSN6PYvMqLmgHTwMW1VkdwtlLXRehURNkRObNM8jKDkAAAVRpyuevV0NoY7ZG1Z5E6V2N7kR3eWuc6Yxufwviavr0dnG+VUjX7jeC3wRAktQAAj2opNxrIZs8tzka7uXM6cOXTpu3y7vQU83HukTXcefGiKFh7gAK8a6HfFDPT5Z7rG5nemRzGdRHM93h3vdqyD6ud7O5yoEligAItbQP+qXb+JF5OLMKz0D/AKpdv4kXk4swLAAArQaQf2Qrv5f9xoGkH9kK7+X/AHGgJLnwABA3+BqJKq9JM9M46dNdfxfN9/YaAn+AKVIbMtRkmtPIq59CbE8czKaPj8/l0xPCN/y8djHapf5nGqmOM7vn4JGR7GFj+EIN90zf+VGm1E/eN5uvmJCDeMnHoybc26+EtRsX67FyK6OMKeVFRVRUVFTYqKfhOsWYc31r11A1En45I0/edKdPn5wZyK1ytcioqLkqLxoaBm4NzDucivh1T2t1xMu3lUcqnj1x2PwAHieoAAAAAAAAAAAAAAAAPaipp6yqZTU7FfI9ckQ/aKlnrallPTRrJI7iRPNegsXDllhtNPySVL0+Uk9idBk9N02vMr7KY4z/AJHtY/Pz6MWjtqnhD2sVrhtVC2CPJz12yPy9JfcZ0rGSxOjkajmParXIvKin0DfLdqi3RFFMboabXcqrrmuqd8qmudK6iuE9K7PON6oi86ci9xjEn0h0yR3KCqRNk0eS9bf9KncRg+dZ1jzfIrt9k93U3nEvc9ZpudsAAPK9IAAAAAAAAAAAAA6PwtX/AAphygr1drOlgar1++iZO8UU2ZX2hW6RyYcnoJpmtdSzqrUc7LgPTNPFHE83zT/XxeugV6g8t80/18XroN80/wBfF66BXqVlp2rcqa225q+k90zk6k1W+biyN80/18XroUlpdr0rcZSxsejo6aJkLVRdi7NZfFyp2BJQ8ABAAAX5owrt/YKoHOXN8DVgd0aq5J+XVJMVhoNuTG01xtssrWI17Z2I5cs801XeTSyt80/18XroFeoPLfNP9fF66DfNP9fF66BXqVfp1uGy3WtrvpVD0z/6t/yLL3zT/XxeuhRGk24pccZ1r2O1o4FSBn/VMl/NrBJRkABAAAAAAP1rnNcjmqrXIuaKi7UU/ABa2A9IscjI7diGXUkTgx1a8Tuh/Mv3u/nWy2Oa9jXscjmuTNFRc0VOc5eN9hrFt7sCoyjqd0p89tPMmszs5U7FQLtdCAr+y6UrRUIjLnTT0T+V7U3Rnht8FJZQYisVeib0u1HIq8Td1RHequ0DaA/EVHIioqKi7UVD9CgAAA1dxxDY7c1VrLrSRKnzd1RXeqm3wIdfdKdvgR0dnpJKuTkkl4DOvLjXwCLBqZ4aaB89RKyGJiZue9yI1qdKqVVjzSK6pbJbsPvfHEvBkquJzuhnKidPH1ENxDiO8X6XWuNW57EXNsLeDG3qb7V2moBtAAEAAAAAAmmAMc1FhVtDX69TblXYmeb4elvR0d3TCwB0xbLhRXOjZV0FTHUQv4nMXwXmXoUyjmyy3e5Waq3xbauSnf8AORq8F3QqLsXtLEsOlVitbFeqBUXiWamXPPravsXsC7Vng0Ntxhhq4NTcLvTMcvzZnbkv5ss+w3cUsczNeKRkjedrs0CvsAAADErrlbqFqura6mpkT62VrfNQMsEKvWkrD1E1zaN0twlTiSNqtZn0ud7EUrzE2O75e2ug3VKKldsWKBVRXJ953GvgnQE2rAxvpAobQ19Ha3R1lfxK5FzjiXpXlXoTt5inK+rqa+slrKyZ808rtZ73caqeACAAAAADoHRvDuGB7WzLLOJX+s5Xe0kJEsP4pwzR2G30j7xStfDTRxuRVXYqNRF5DO+OWF/tql719wVvwaD45YX+2qXvX3D45YX+2qXvX3AVhplk18aPbs+Tp427O1faQskOkavp7njGuq6SZJqd2okb04lRGNRfHMjwQAAF1aGbjvvCq0b3ZyUUqsRPuO4SeKuTsJwUfomvtNZb9M2unbBS1MOTnu4kc1c2r/UnaWj8csL/AG1S96+4K34NB8csL/bVL3r7h8csL/bVL3r7gGkG5/BWEa+pa7KV8e5R8+s/ZmnUiqvYc+FiaX8S0N1joaC2VbKiFirNK5i7NbianYmt3ldhJAAAOjsJS7thW1ScrqOLPr1EzOcS6sD4rsNLhO3U1bdIIZ4otR7HuXNMlVE8MgsJwDQfHLC/21S96+4fHLC/21S96+4DfnO+O4dwxldmZZZ1T3+sut7S6fjlhf7ape9fcU7pGqaKtxhW1dBUMngl1HI9nFnqNRfFFBKPAAItbQP+qXb+JF5OLMKj0PXu1WmmuTblXRUyyvjViPX0skdn5k9+OWF/tql719wVvwaD45YX+2qXvX3D45YX+2qXvX3ANIP7IV38v+40GnxrinD9ZhmrpqW608sz9TVY1VzXJ7VXwQAlSgACBvsJXxbZUbhUOVaSRdv3F5/eaEHdj5FePci5bnfDqv2aL9E0VxulcLHNexHscjmuTNFRc0VD9IDhTES0CpR1jldSqvBdxrH/AKJ4x7ZGI9jkc1yZoqLmiob/AIGfbzLfKp49cdjS8zDrxa+TVw6pfRosR4dp7mizwq2Gqy9LLgv/ABe83oPRfx7eRRNFyNsOizers18uidkqlr6KqoKhYKqF0b04s+JU50XlMctquo6augWGqhbKxeReNOlF5CIXfB80etLbpN2bx7m9cnJ1LxL4GoZuhXrMzVZ6VPf4/Bs+JrFq70bvRnuRQHpUQTU0qxTxPienG1yZKeZgpiYnZLMRMTG2AAEUAAAAAADKt9ura+TUpKd8nO5EyanWvEcqKKq55NMbZcaqqaI21TshimzsllrbrJ8izUhRcnSuTgp1c69BJbPhCGFWy3GRJnpt3Nuxqda8a+BKI2MjjbHGxrGNTJGtTJENiwdArrmK8jdHZ1+DB5mtU09Gxvnt6mFZrVSWqn3OnZm9fTkd6Tv9dBngG2W7dFqmKKI2RDW67lVyqaqp2zIY1xrYKCkfU1L9Vje9V5ETpFxraegpXVNTIjGN71XmROVSuL/d6i7VW6SZshb+jjz2NT3mO1PU6MOjZG+ueEf7L3afp9WVVtndTHGf8h5Xm4z3OtdUzLknExmexjeYwgDQ7lyq5VNdU7ZluVFFNFMU0xsiAAHByAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6wVNRB+hnli/A9U8jLZfL0xUVt3uDVTiVKl6ZeJrwBsZL9fJFzfebi9U5XVT19pi1FbWVGe+KuebP6ciu8zwAAAAAAAAAAAAAAAAAAAAD7ikkidrxPcx3O1clPgAZzLxdmN1WXSuanMlQ5PaejsQX5zNR17uSt5lqn5eZrQBlzXO5TJlNcKuROLhzOXzUxAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABu8OYgqLW9IpM5qVV2sz2t6W+40gO6xfuWK4rtzsl1XrNF6iaK42wtqgrKaup0npZWyMXm40XmVORTIKmt1dVW+oSakldG7lTkcnMqcpNrJiqjq0bFW6tLNxZqvAd28nb3m44Gt2sjZTd6NXdLVszSblnpW+lT3pGD8RUVEVFzReJT9M4xDxqqanqo9zqYI5Wcz25mirsH22bN1O+WmdzIus3uXb4kjB57+HYyP5KYn87XfZyb1n+OqYQOpwZcGbYKiCZOnNq/8AnaYEuG71Hx0TnJzte1fJSywYu55PYtXo7Y+P3ZGjW8mnjsn89irVst2Rcvg6p/8AbUNsl3cuSW6o7WZFpA6P23Z/vPc7f167/WO9W8OF71Iu2lSNOd8jffmbGkwVUuyWqrIo05Ujarl8cibg9FvQMSjjtn3z9tjoua1k1cNke6PvtaOgwtaaVUc+J1Q9OWVc07k2G6jYyNiMY1rGpxI1MkQ+gZWzj2rEbLdMQx12/cuztrqmQA86ieGniWWeVkUbeNzlyQ7ZmIjbLriJmdkPQ1l8vVJaos5Xa8ypwImrtXr5kNDfMX7HQWtvQszk8k9q9xEZpJJpXSyvc97lzc5y5qpr2oa9RbiaMffPb1R9/ozmFo1dfTvbo7OvwZV3udVc6lZql+xPQYnosToMIA1G5cquVTVXO2ZbNRRTRTFNMbIgABwcgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbK1Xu421USCdXRp+6ftb/AK7CVW3GFDMiNrY30z+VycJvv8CBgyOLqmTjbqKtsdk74eHI06xkb6o2T2wtylqqaqZr008credjkU9in45HxPR8b3McnErVyU2tJiS8U+SJVrK1OSVEd48fiZ2x5SW53XaJj3b2Hu6FXH8dW33rLBCIMa1TU+XooZPwOVvnmb2233fiIu9dTP8A9TP2GUsari352UVb/dLHXtNyLMbaqd3vhugfMbteNrsss0zPipl3FiO1dbNcuMyE1REbXiiJmdj1BHLnifeWf/C19uX6XL2GmqMZ3B+yGnp4k51zcpjL2sYlmdk1b/dLIWtLybsbYjd74Tww6+50FCirVVUcap83PN3cm0rqsvl2qkVJa6XVX5rF1U8MjXKqqua7VMXf8pI4WaPn9o+7I2dBnjdq+X38EyueM2oist1Oqr9ZL7EQi1fX1lfJulXUPlXkRV2J1JxIYwMDlahkZX8lW7s6mZx8Kxj+hTv7esAB4nqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//Z" alt="WOOMI">
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-title">
+      <h1>리얼에셋팀 투자출자현황 대시보드</h1>
+      <p>Real Asset Portfolio Dashboard · 기준일 2026.03.11 · 2026-1Q</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-chip">
+      <span class="lbl">총 투자잔액</span>
+      <span class="val">2,379억</span>
+    </div>
+    <div class="header-chip">
+      <span class="lbl">운용 PJT</span>
+      <span class="val">28건</span>
+    </div>
+    <div class="header-chip">
+      <span class="lbl">가중평균 수익률</span>
+      <span class="val">27.0%</span>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <button class="nav-btn active" onclick="showPage('overview',this)">📊 전체 현황</button>
+  <button class="nav-btn" onclick="showPage('projects',this)">🏢 프로젝트별</button>
+  <button class="nav-btn" onclick="showPage('yearly',this)">📈 연도별 추이</button>
+  <button class="nav-btn" onclick="showPage('returns',this)">💹 수익률 분석</button>
+</nav>
+
+<!-- ══════════ PAGE 1: OVERVIEW ══════════ -->
+<div class="page active" id="page-overview">
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--card-color:#2563eb; --icon-bg:#eff6ff;">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">총 투자액 (누적)</div>
+      <div class="kpi-value">2,552<small> 억원</small></div>
+      <div class="kpi-sub">2019~2025 신규투자 합계</div>
+      <div class="kpi-badge badge-neutral">PJT1 + PJT2</div>
+    </div>
+    <div class="kpi-card" style="--card-color:#059669; --icon-bg:#ecfdf5;">
+      <div class="kpi-icon">🔄</div>
+      <div class="kpi-label">총 회수액 (누적)</div>
+      <div class="kpi-value">1,939<small> 억원</small></div>
+      <div class="kpi-sub">2019~2025 원금회수 합계</div>
+      <div class="kpi-badge badge-up">▲ 회수 진행중</div>
+    </div>
+    <div class="kpi-card" style="--card-color:#d97706; --icon-bg:#fffbeb;">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-label">총 수익 (누적)</div>
+      <div class="kpi-value">2,515<small> 억원</small></div>
+      <div class="kpi-sub">2019~2030 이자·배당 합계 (예상포함)</div>
+      <div class="kpi-badge badge-up">▲ 2027년 최대 수익</div>
+    </div>
+    <div class="kpi-card" style="--card-color:#0d9488; --icon-bg:#f0fdfa;">
+      <div class="kpi-icon">🏦</div>
+      <div class="kpi-label">총 배당수익 (실적)</div>
+      <div class="kpi-value">498<small> 억원</small></div>
+      <div class="kpi-sub">2019~2025 실현 배당·이자 합계</div>
+      <div class="kpi-badge badge-up">▲ '25년 75.6억 실현</div>
+    </div>
+  </div>
+
+  <!-- HERO CHART -->
+  <div class="hero-chart-wrap">
+    <div class="hero-chart-header">
+      <div class="hero-chart-title">
+        <h2>📊 리얼에셋팀 투자잔액 및 연도별 운용현황</h2>
+        <p>2019~2030년 투자잔액 추이 · 실선: 실적 / 점선: 예상 · 단위: 억원 (세전)</p>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hs-val">2,379억</div>
+          <div class="hs-lbl">2025년 기말잔액</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hs-val" style="color:var(--green)">+587억</div>
+          <div class="hs-lbl">전년 대비 증가</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hs-val" style="color:var(--gold)">1,073억</div>
+          <div class="hs-lbl">2027 예상 수익 (피크)</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap-hero">
+      <canvas id="chart-hero"></canvas>
+    </div>
+    <div class="chart-legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div>투자잔액 (실적)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#93c5fd; border:2px dashed #2563eb; background:transparent; width:18px; height:0; border-radius:0;"></div>투자잔액 (예상)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>이자·배당수익</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>원금회수</div>
+      <span style="margin-left:auto; font-size:11px; color:var(--text3)">※ 2026년 이후는 예상치</span>
+    </div>
+  </div>
+
+  <!-- MINI CHARTS -->
+  <div class="three-col">
+    <div class="chart-card">
+      <h3>Asset Class별 투자잔액 구성</h3>
+      <div class="chart-wrap"><canvas id="chart-asset"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>연도별 신규투자 vs 원금회수</h3>
+      <div class="chart-wrap"><canvas id="chart-invest"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>PJT1 / PJT2 잔액 추이</h3>
+      <div class="chart-wrap"><canvas id="chart-pjt"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SNAPSHOT TABLE -->
+  <div class="section-title">포트폴리오 스냅샷 (2026-1Q)</div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>Asset Class</th>
+          <th style="text-align:center">건수</th>
+          <th style="text-align:right">투자원금 Equity</th>
+          <th style="text-align:right">대출/대여</th>
+          <th style="text-align:right">합계 (억)</th>
+          <th style="text-align:right">투자잔액 (억)</th>
+          <th style="text-align:right">수익률 투자시점</th>
+          <th style="text-align:right">수익률 현재시점</th>
+          <th style="text-align:right">괴리율</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>투자 PJT</td><td><span class="pjt-type type-오피스">오피스</span></td><td class="mono" style="text-align:center">11</td><td class="mono" style="text-align:right">1,392.5</td><td class="mono" style="text-align:right">25.3</td><td class="mono" style="text-align:right">1,417.8</td><td class="mono" style="text-align:right">1,417.8</td><td class="mono trend-up" style="text-align:right">32.80%</td><td class="mono trend-up" style="text-align:right">34.16%</td><td class="mono trend-up" style="text-align:right">+1.36%p</td></tr>
+        <tr><td>투자 PJT</td><td><span class="pjt-type type-IDC">IDC</span></td><td class="mono" style="text-align:center">1</td><td class="mono" style="text-align:right">17.2</td><td class="mono" style="text-align:right">0</td><td class="mono" style="text-align:right">17.2</td><td class="mono" style="text-align:right">17.2</td><td class="mono trend-up" style="text-align:right">38.20%</td><td class="mono trend-up" style="text-align:right">42.40%</td><td class="mono trend-up" style="text-align:right">+4.20%p</td></tr>
+        <tr><td>투자 PJT</td><td><span class="pjt-type type-물류">물류</span></td><td class="mono" style="text-align:center">2</td><td class="mono" style="text-align:right">5.0</td><td class="mono" style="text-align:right">310.0</td><td class="mono" style="text-align:right">315.0</td><td class="mono" style="text-align:right">315.0</td><td class="mono" style="text-align:right">0.13%</td><td class="mono" style="text-align:right">0.13%</td><td class="mono" style="text-align:right">—</td></tr>
+        <tr><td>투자 PJT</td><td><span class="pjt-type type-기타">기타</span></td><td class="mono" style="text-align:center">1</td><td class="mono" style="text-align:right">53.7</td><td class="mono" style="text-align:right">0</td><td class="mono" style="text-align:right">53.7</td><td class="mono" style="text-align:right">53.7</td><td class="mono" style="text-align:right">0%</td><td class="mono" style="text-align:right">0%</td><td class="mono" style="text-align:right">—</td></tr>
+        <tr class="subtotal-row"><td colspan="2"><strong>투자 PJT 소계</strong></td><td class="mono" style="text-align:center"><strong>15</strong></td><td class="mono" style="text-align:right"><strong>1,468.4</strong></td><td class="mono" style="text-align:right"><strong>335.2</strong></td><td class="mono" style="text-align:right"><strong>1,803.6</strong></td><td class="mono" style="text-align:right"><strong>1,803.6</strong></td><td class="mono" style="text-align:right"><strong>26.17%</strong></td><td class="mono" style="text-align:right"><strong>27.28%</strong></td><td class="mono trend-up" style="text-align:right"><strong>+1.11%p</strong></td></tr>
+        <tr><td>전략 PJT</td><td><span class="pjt-type type-오피스">오피스</span></td><td class="mono" style="text-align:center">4</td><td class="mono" style="text-align:right">92.4</td><td class="mono" style="text-align:right">0</td><td class="mono" style="text-align:right">92.4</td><td class="mono" style="text-align:right">92.4</td><td class="mono trend-up" style="text-align:right">20.22%</td><td class="mono trend-up" style="text-align:right">20.22%</td><td class="mono" style="text-align:right">—</td></tr>
+        <tr><td>전략 PJT</td><td><span class="pjt-type type-물류">물류</span></td><td class="mono" style="text-align:center">6</td><td class="mono" style="text-align:right">139.1</td><td class="mono" style="text-align:right">171.0</td><td class="mono" style="text-align:right">310.1</td><td class="mono" style="text-align:right">310.1</td><td class="mono trend-up" style="text-align:right">8.08%</td><td class="mono trend-up" style="text-align:right">8.08%</td><td class="mono" style="text-align:right">—</td></tr>
+        <tr><td>전략 PJT</td><td><span class="pjt-type type-기타">기타</span></td><td class="mono" style="text-align:center">3</td><td class="mono" style="text-align:right">58.0</td><td class="mono" style="text-align:right">114.9</td><td class="mono" style="text-align:right">172.9</td><td class="mono" style="text-align:right">172.9</td><td class="mono trend-up" style="text-align:right">62.35%</td><td class="mono trend-up" style="text-align:right">62.35%</td><td class="mono" style="text-align:right">—</td></tr>
+        <tr class="subtotal-row"><td colspan="2"><strong>전략 PJT 소계</strong></td><td class="mono" style="text-align:center"><strong>13</strong></td><td class="mono" style="text-align:right"><strong>289.6</strong></td><td class="mono" style="text-align:right"><strong>285.8</strong></td><td class="mono" style="text-align:right"><strong>575.4</strong></td><td class="mono" style="text-align:right"><strong>575.4</strong></td><td class="mono" style="text-align:right"><strong>26.33%</strong></td><td class="mono" style="text-align:right"><strong>26.33%</strong></td><td class="mono" style="text-align:right"><strong>—</strong></td></tr>
+        <tr class="total-row"><td colspan="2"><strong>🏆 전체 합계</strong></td><td class="mono" style="text-align:center"><strong>28</strong></td><td class="mono" style="text-align:right"><strong>1,757.9</strong></td><td class="mono" style="text-align:right"><strong>621.1</strong></td><td class="mono" style="text-align:right"><strong>2,379.0</strong></td><td class="mono" style="text-align:right"><strong>2,379.0</strong></td><td class="mono trend-up" style="text-align:right"><strong>26.21%</strong></td><td class="mono trend-up" style="text-align:right"><strong>27.05%</strong></td><td class="mono trend-up" style="text-align:right"><strong>+0.84%p</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ PAGE 2: PROJECTS ══════════ -->
+<div class="page" id="page-projects">
+  <div class="table-toolbar" style="background:var(--surface); border:1px solid var(--border); border-radius:14px 14px 0 0; margin-bottom:0;">
+    <h3>전체 프로젝트 목록 (28건)</h3>
+    <div class="toolbar-controls">
+      <select class="filter-select" id="filter-pjt" onchange="filterProjects()">
+        <option value="">전체 PJT</option>
+        <option value="PJT 1">PJT 1 (투자)</option>
+        <option value="PJT 2">PJT 2 (전략)</option>
+      </select>
+      <select class="filter-select" id="filter-asset" onchange="filterProjects()">
+        <option value="">전체 자산</option>
+        <option value="오피스">오피스</option>
+        <option value="물류">물류</option>
+        <option value="IDC">IDC</option>
+        <option value="기타">기타</option>
+      </select>
+      <select class="filter-select" id="filter-type" onchange="filterProjects()">
+        <option value="">실물/개발</option>
+        <option value="실물">실물</option>
+        <option value="개발">개발</option>
+      </select>
+      <input class="search-input" type="text" placeholder="프로젝트명 검색..." oninput="filterProjects()" id="search-proj">
+    </div>
+  </div>
+  <div class="table-card" style="border-radius:0 0 14px 14px; border-top:none;">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortProj(0)">PJT</th>
+          <th onclick="sortProj(1)">유형</th>
+          <th onclick="sortProj(2)">Asset</th>
+          <th onclick="sortProj(3)">프로젝트명</th>
+          <th onclick="sortProj(4)">GP</th>
+          <th onclick="sortProj(5)" style="text-align:right">투자원금 (억)</th>
+          <th onclick="sortProj(6)" style="text-align:right">Target IRR</th>
+          <th onclick="sortProj(7)" style="text-align:right">현재 IRR</th>
+          <th onclick="sortProj(8)" style="text-align:right">차이</th>
+        </tr>
+      </thead>
+      <tbody id="proj-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ PAGE 3: YEARLY ══════════ -->
+<div class="page" id="page-yearly">
+  <div class="two-col">
+    <div class="chart-card">
+      <h3>연도별 기말잔액 추이 (PJT1 vs PJT2)</h3>
+      <div class="chart-wrap" style="height:260px"><canvas id="chart-y-balance"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>연도별 이자·배당수익</h3>
+      <div class="chart-wrap" style="height:260px"><canvas id="chart-y-income"></canvas></div>
+    </div>
+  </div>
+  <div class="section-title">연도별 투자현황 상세 (전체 합계, 억원)</div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>년도</th>
+          <th style="text-align:right">기초잔액</th>
+          <th style="text-align:right">신규투자금</th>
+          <th style="text-align:right">원금회수금</th>
+          <th style="text-align:right">기말잔액</th>
+          <th style="text-align:right">이자·배당수익</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="yearly-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ PAGE 4: RETURNS ══════════ -->
+<div class="page" id="page-returns">
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--card-color:#059669; --icon-bg:#ecfdf5;">
+      <div class="kpi-icon">🎯</div>
+      <div class="kpi-label">전체 가중평균 수익률</div>
+      <div class="kpi-value">27.0<small>%</small></div>
+      <div class="kpi-sub">현재시점 기준</div>
+      <div class="kpi-badge badge-up">▲ 투자시점 대비 +0.84%p</div>
+    </div>
+    <div class="kpi-card" style="--card-color:#2563eb; --icon-bg:#eff6ff;">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-label">투자 PJT 수익률</div>
+      <div class="kpi-value">27.3<small>%</small></div>
+      <div class="kpi-sub">15개 프로젝트</div>
+      <div class="kpi-badge badge-up">▲ +1.11%p</div>
+    </div>
+    <div class="kpi-card" style="--card-color:#7c3aed; --icon-bg:#f5f3ff;">
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-label">전략 PJT 수익률</div>
+      <div class="kpi-value">26.3<small>%</small></div>
+      <div class="kpi-sub">13개 프로젝트</div>
+      <div class="kpi-badge badge-neutral">유지</div>
+    </div>
+    <div class="kpi-card" style="--card-color:#d97706; --icon-bg:#fffbeb;">
+      <div class="kpi-icon">🏆</div>
+      <div class="kpi-label">최고 수익률 프로젝트</div>
+      <div class="kpi-value">42.4<small>%</small></div>
+      <div class="kpi-sub">문봉동 IDC (현재시점)</div>
+      <div class="kpi-badge badge-up">▲ Target 대비 +4.2%p</div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card">
+      <h3>Asset Class별 수익률 비교</h3>
+      <div class="chart-wrap"><canvas id="chart-r-asset"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>주요 프로젝트 IRR (Target vs 현재)</h3>
+      <div class="chart-wrap"><canvas id="chart-r-irr"></canvas></div>
+    </div>
+  </div>
+  <div class="section-title">프로젝트별 수익률 상세</div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>PJT</th><th>구분</th><th>Asset</th><th>프로젝트명</th><th>GP</th>
+          <th style="text-align:right">투자원금</th>
+          <th style="text-align:right">Target IRR</th>
+          <th style="text-align:right">현재 IRR</th>
+          <th style="text-align:right">차이</th><th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="irr-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ════ DATA ════
+const projectData = [
+  {pjt:'PJT 1',type:'실물',asset:'오피스',name:'린스퀘어',gp:'이지스',amount:300,tIrr:9.79,cIrr:9.79,diff:0},
+  {pjt:'PJT 1',type:'실물',asset:'오피스',name:'글라스40호',gp:'이지스',amount:351,tIrr:6.08,cIrr:6.08,diff:0,note:'연장전'},
+  {pjt:'PJT 1',type:'실물',asset:'오피스',name:'글라스40호(연장후)',gp:'이지스',amount:351,tIrr:90.72,cIrr:90.72,diff:0,note:'연장후'},
+  {pjt:'PJT 1',type:'실물',asset:'오피스',name:'글라스59호',gp:'이지스',amount:82.49,tIrr:1.24,cIrr:1.24,diff:0,note:'연장전'},
+  {pjt:'PJT 1',type:'실물',asset:'오피스',name:'글라스59호(연장후)',gp:'이지스',amount:82.49,tIrr:23.51,cIrr:23.51,diff:0,note:'연장후'},
+  {pjt:'PJT 1',type:'개발',asset:'오피스',name:'롯데분당점',gp:'이지스',amount:450,tIrr:12.0,cIrr:16.4,diff:4.4},
+  {pjt:'PJT 1',type:'개발',asset:'오피스',name:'신도림디큐브',gp:'이지스',amount:134.375,tIrr:17.81,cIrr:17.45,diff:-0.36},
+  {pjt:'PJT 1',type:'개발',asset:'IDC',name:'문봉동IDC',gp:'이지스',amount:17.16,tIrr:38.2,cIrr:42.4,diff:4.2},
+  {pjt:'PJT 1',type:'개발',asset:'오피스',name:'을지로3가10지구',gp:'이지스',amount:33.33,tIrr:35.17,cIrr:35.17,diff:0},
+  {pjt:'PJT 1',type:'실물',asset:'오피스',name:'서울숲더샵',gp:'GRE',amount:15,tIrr:24.5,cIrr:24.5,diff:0},
+  {pjt:'PJT 1',type:'개발',asset:'오피스',name:'용산나진상가',gp:'이지스',amount:25.2,tIrr:17.6,cIrr:17.6,diff:0},
+  {pjt:'PJT 1',type:'개발',asset:'오피스',name:'수서역세권B1-3BL',gp:'이지스',amount:0.0562,tIrr:16.3,cIrr:14.12,diff:-2.18},
+  {pjt:'PJT 1',type:'실물',asset:'기타',name:'로컬스티치',gp:'기타',amount:53.71,tIrr:0,cIrr:0,diff:0},
+  {pjt:'PJT 1',type:'실물',asset:'오피스',name:'마곡D13',gp:'기타',amount:26.32,tIrr:0,cIrr:0,diff:0},
+  {pjt:'PJT 1',type:'개발',asset:'물류',name:'용인국제물류2차',gp:'기타',amount:5,tIrr:8.0,cIrr:8.0,diff:0},
+  {pjt:'PJT 1',type:'실물',asset:'물류',name:'파주대원물류',gp:'현대인베',amount:309.96,tIrr:0,cIrr:0,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'오피스',name:'KT성남지사',gp:'마스턴',amount:4.91,tIrr:22.55,cIrr:22.55,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'오피스',name:'KT청량지사',gp:'마스턴',amount:11.60,tIrr:6.7,cIrr:6.7,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'물류',name:'남양주연평물류',gp:'K클라비스',amount:24.5,tIrr:0,cIrr:0,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'오피스',name:'여의도앙사나',gp:'마스턴',amount:25.91,tIrr:37.65,cIrr:37.65,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'물류',name:'용인통삼물류',gp:'K클라비스',amount:205.77,tIrr:0,cIrr:0,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'물류',name:'용인포곡물류',gp:'기타',amount:29.85,tIrr:16.7,cIrr:16.7,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'물류',name:'여주삼교물류',gp:'K클라비스',amount:0.01,tIrr:46.3,cIrr:46.3,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'물류',name:'안성장서물류',gp:'K클라비스',amount:20,tIrr:87.9,cIrr:87.9,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'기타',name:'용인덕성골프',gp:'K클라비스',amount:132.86,tIrr:79.3,cIrr:79.3,diff:0},
+  {pjt:'PJT 2',type:'실물',asset:'기타',name:'NH프라임리츠',gp:'NH리츠',amount:30,tIrr:5.5,cIrr:5.5,diff:0},
+  {pjt:'PJT 2',type:'실물',asset:'기타',name:'마스턴프리미어리츠',gp:'마스턴',amount:10,tIrr:7.63,cIrr:7.63,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'물류',name:'아산GH물류',gp:'K클라비스',amount:30,tIrr:8.3,cIrr:8.3,diff:0},
+  {pjt:'PJT 2',type:'개발',asset:'오피스',name:'대구삼성생명',gp:'NH아문디',amount:50,tIrr:14.1,cIrr:14.1,diff:0},
+];
+
+const yearlyData = [
+  {year:2019,start:0,invest:-617.69,recover:2.2,end:615.49,income:0},
+  {year:2020,start:615.49,invest:-900.94,recover:0,end:1516.43,income:5.36},
+  {year:2021,start:1516.43,invest:-65.21,recover:19.48,end:1562.15,income:26.75},
+  {year:2022,start:1562.15,invest:-205.05,recover:116.30,end:1650.90,income:39.41},
+  {year:2023,start:1650.90,invest:-151.15,recover:9.99,end:1792.07,income:66.44},
+  {year:2024,start:1792.07,invest:-420.57,recover:74.71,end:2139.83,income:284.32},
+  {year:2025,start:2139.83,invest:-344.95,recover:103.65,end:2378.93,income:75.61},
+  {year:2026,start:2378.93,invest:0,recover:17.27,end:2361.66,income:104.08},
+  {year:2027,start:2361.66,invest:0,recover:778.69,end:1582.97,income:1073.38},
+  {year:2028,start:1582.97,invest:153.98,recover:541.29,end:887.70,income:521.0},
+  {year:2029,start:887.70,invest:0,recover:275.01,end:612.69,income:318.5},
+  {year:2030,start:612.69,invest:0,recover:0,end:612.69,income:0},
+];
+
+const pjt1End = [0,80.03,880.03,1085.53,1132.23,1275.10,1583.18,1803.53,1786.26,1007.57,557.57,389.86,389.86];
+const pjt2End = [0,535.46,636.40,476.62,518.67,516.97,556.65,575.40,575.40,575.40,330.13,222.83,222.83];
+
+// ════ UTILS ════
+function fmt(n){return n===0||n==='-'?'—':Number(n).toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1});}
+function fmtPct(n){return typeof n!=='number'?'—':n.toFixed(2)+'%';}
+
+function showPage(id, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ════ PROJECT TABLE ════
+let sortCol=-1, sortDir=1;
+function renderProjects(data){
+  const tb=document.getElementById('proj-body');
+  if(!data.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">검색 결과 없음</td></tr>';return;}
+  tb.innerHTML=data.map(p=>{
+    const dc=p.diff>0?'trend-up':p.diff<0?'trend-down':'trend-zero';
+    const dt=p.diff>0?'+'+p.diff.toFixed(2)+'%p':p.diff<0?p.diff.toFixed(2)+'%p':'—';
+    return `<tr>
+      <td><span class="tag ${p.pjt==='PJT 1'?'tag-pjt1':'tag-pjt2'}">${p.pjt}</span></td>
+      <td><span class="tag ${p.type==='실물'?'tag-real':'tag-dev'}">${p.type}</span></td>
+      <td><span class="pjt-type type-${p.asset}">${p.asset}</span></td>
+      <td style="font-weight:600">${p.name}</td>
+      <td style="color:var(--text2)">${p.gp}</td>
+      <td class="mono" style="text-align:right">${fmt(p.amount)}</td>
+      <td class="mono trend-up" style="text-align:right">${fmtPct(p.tIrr)}</td>
+      <td class="mono" style="text-align:right;color:var(--green)">${fmtPct(p.cIrr)}</td>
+      <td class="mono ${dc}" style="text-align:right">${dt}</td>
+    </tr>`;
+  }).join('');
+}
+function filterProjects(){
+  const pjt=document.getElementById('filter-pjt').value;
+  const asset=document.getElementById('filter-asset').value;
+  const type=document.getElementById('filter-type').value;
+  const q=document.getElementById('search-proj').value.toLowerCase();
+  renderProjects(projectData.filter(p=>
+    (!pjt||p.pjt===pjt)&&(!asset||p.asset===asset)&&
+    (!type||p.type===type)&&(!q||p.name.toLowerCase().includes(q)||p.gp.toLowerCase().includes(q))
+  ));
+}
+function sortProj(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}
+  const keys=['pjt','type','asset','name','gp','amount','tIrr','cIrr','diff'];
+  document.querySelectorAll('#page-projects thead th').forEach((th,i)=>{th.className=i===col?(sortDir===1?'sort-asc':'sort-desc'):'';}); 
+  projectData.sort((a,b)=>{const av=a[keys[col]],bv=b[keys[col]];return typeof av==='number'?(av-bv)*sortDir:av.localeCompare(bv)*sortDir;});
+  filterProjects();
+}
+
+// ════ IRR TABLE ════
+function renderIrr(){
+  document.getElementById('irr-body').innerHTML=projectData.map(p=>{
+    const dc=p.diff>0?'trend-up':p.diff<0?'trend-down':'trend-zero';
+    const dt=p.diff>0?'+'+p.diff.toFixed(2)+'%p':p.diff<0?p.diff.toFixed(2)+'%p':'—';
+    return `<tr>
+      <td><span class="tag ${p.pjt==='PJT 1'?'tag-pjt1':'tag-pjt2'}">${p.pjt}</span></td>
+      <td><span class="tag ${p.type==='실물'?'tag-real':'tag-dev'}">${p.type}</span></td>
+      <td><span class="pjt-type type-${p.asset}">${p.asset}</span></td>
+      <td style="font-weight:600">${p.name}</td>
+      <td style="color:var(--text2)">${p.gp}</td>
+      <td class="mono" style="text-align:right">${fmt(p.amount)}</td>
+      <td class="mono" style="text-align:right;color:var(--accent)">${fmtPct(p.tIrr)}</td>
+      <td class="mono" style="text-align:right;color:var(--green)">${fmtPct(p.cIrr)}</td>
+      <td class="mono ${dc}" style="text-align:right">${dt}</td>
+      <td style="font-size:11px;color:var(--text3)">${p.note||''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════ YEARLY TABLE ════
+function renderYearly(){
+  document.getElementById('yearly-body').innerHTML=yearlyData.map(r=>{
+    const isCur=r.year===2026;
+    const isFore=r.year>2026;
+    const cls=isCur?'yr-current':isFore?'yr-forecast':'';
+    return `<tr class="${cls}">
+      <td class="mono"><strong>${r.year}</strong>${isCur?' ◀ 현재':isFore?' (예상)':''}</td>
+      <td class="mono" style="text-align:right">${fmt(r.start)}</td>
+      <td class="mono trend-down" style="text-align:right">${r.invest!==0?fmt(r.invest):'—'}</td>
+      <td class="mono trend-up" style="text-align:right">${r.recover!==0?fmt(r.recover):'—'}</td>
+      <td class="mono" style="text-align:right;font-weight:600">${fmt(r.end)}</td>
+      <td class="mono" style="text-align:right;color:var(--gold)">${r.income!==0?fmt(r.income):'—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${isFore?'예상치':''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════ CHARTS ════
+const years = yearlyData.map(r=>r.year+'');
+const CO = {
+  blue:'#2563eb', teal:'#0d9488', gold:'#d97706',
+  green:'#059669', purple:'#7c3aed', red:'#dc2626',
+  blueLight:'rgba(37,99,235,0.12)', goldLight:'rgba(217,119,6,0.15)',
+  greenLight:'rgba(5,150,105,0.12)',
+};
+const baseOpts = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{
+    legend:{labels:{color:'#64748b',font:{size:11,family:"'Pretendard'"},padding:14}},
+    tooltip:{backgroundColor:'#fff',borderColor:'#e2e8f4',borderWidth:1,titleColor:'#0f172a',bodyColor:'#475569',padding:10}
+  }
+};
+
+function initCharts(){
+  // HERO CHART
+  new Chart(document.getElementById('chart-hero'),{
+    type:'line',
+    data:{
+      labels:years,
+      datasets:[
+        {label:'투자잔액 (실적)',data:yearlyData.map(r=>r.year<=2025?r.end:null),
+          borderColor:CO.blue,backgroundColor:CO.blueLight,borderWidth:2.5,
+          pointRadius:4,pointBackgroundColor:CO.blue,fill:true,tension:0.35},
+        {label:'투자잔액 (예상)',data:yearlyData.map(r=>r.year>=2025?r.end:null),
+          borderColor:CO.blue,backgroundColor:'transparent',borderWidth:2,
+          borderDash:[6,4],pointRadius:3,fill:false,tension:0.35},
+        {label:'이자·배당수익',data:yearlyData.map(r=>r.income),
+          borderColor:CO.gold,backgroundColor:CO.goldLight,borderWidth:2,
+          pointRadius:3,fill:true,tension:0.35,yAxisID:'y2'},
+        {label:'원금회수',data:yearlyData.map(r=>r.recover),
+          borderColor:CO.green,backgroundColor:'transparent',borderWidth:1.5,
+          borderDash:[3,3],pointRadius:2,fill:false,tension:0.35,yAxisID:'y2'},
+      ]
+    },
+    options:{...baseOpts,
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#f1f5f9'}},
+        y:{position:'left',ticks:{color:'#64748b',callback:v=>v+'억'},grid:{color:'#f1f5f9'},title:{display:true,text:'투자잔액 (억원)',color:'#94a3b8',font:{size:11}}},
+        y2:{position:'right',ticks:{color:'#64748b',callback:v=>v+'억'},grid:{display:false},title:{display:true,text:'수익/회수 (억원)',color:'#94a3b8',font:{size:11}}}
+      },
+      plugins:{...baseOpts.plugins,legend:{...baseOpts.plugins.legend,position:'top'}}
+    }
+  });
+
+  // ASSET DONUT
+  new Chart(document.getElementById('chart-asset'),{
+    type:'doughnut',
+    data:{
+      labels:['오피스 1,510억','물류 625억','기타 227억','IDC 17억'],
+      datasets:[{data:[1510,625,227,17],
+        backgroundColor:[CO.blue,'#0d9488','#d97706','#7c3aed'],
+        borderColor:'#fff',borderWidth:3}]
+    },
+    options:{...baseOpts,cutout:'62%',
+      plugins:{...baseOpts.plugins,legend:{...baseOpts.plugins.legend,position:'bottom'}}
+    }
+  });
+
+  // INVEST BAR
+  new Chart(document.getElementById('chart-invest'),{
+    type:'bar',
+    data:{
+      labels:years.slice(0,7),
+      datasets:[
+        {label:'신규투자',data:yearlyData.slice(0,7).map(r=>Math.abs(r.invest)),backgroundColor:'rgba(37,99,235,0.7)',borderRadius:4},
+        {label:'원금회수',data:yearlyData.slice(0,7).map(r=>r.recover),backgroundColor:'rgba(5,150,105,0.7)',borderRadius:4},
+      ]
+    },
+    options:{...baseOpts,
+      scales:{
+        x:{ticks:{color:'#94a3b8'},grid:{display:false}},
+        y:{ticks:{color:'#64748b',callback:v=>v+'억'},grid:{color:'#f1f5f9'}}
+      },
+      plugins:{...baseOpts.plugins,legend:{...baseOpts.plugins.legend,position:'bottom'}}
+    }
+  });
+
+  // PJT1 vs PJT2
+  const yrLabels=['2019','2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030'];
+  new Chart(document.getElementById('chart-pjt'),{
+    type:'line',
+    data:{
+      labels:yrLabels,
+      datasets:[
+        {label:'PJT1 (투자)',data:pjt1End.slice(1),borderColor:CO.blue,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.35},
+        {label:'PJT2 (전략)',data:pjt2End.slice(1),borderColor:CO.purple,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.35},
+      ]
+    },
+    options:{...baseOpts,
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#f1f5f9'}},
+        y:{ticks:{color:'#64748b',callback:v=>v+'억'},grid:{color:'#f1f5f9'}}
+      },
+      plugins:{...baseOpts.plugins,legend:{...baseOpts.plugins.legend,position:'bottom'}}
+    }
+  });
+
+  // YEARLY BALANCE
+  new Chart(document.getElementById('chart-y-balance'),{
+    type:'bar',
+    data:{
+      labels:yrLabels,
+      datasets:[
+        {label:'PJT1',data:pjt1End.slice(1),backgroundColor:'rgba(37,99,235,0.7)',borderRadius:4,stack:'s'},
+        {label:'PJT2',data:pjt2End.slice(1),backgroundColor:'rgba(124,58,237,0.7)',borderRadius:4,stack:'s'},
+      ]
+    },
+    options:{...baseOpts,
+      scales:{
+        x:{stacked:true,ticks:{color:'#94a3b8',font:{size:10}},grid:{display:false}},
+        y:{stacked:true,ticks:{color:'#64748b',callback:v=>v+'억'},grid:{color:'#f1f5f9'}}
+      },
+      plugins:{...baseOpts.plugins,legend:{...baseOpts.plugins.legend,position:'bottom'}}
+    }
+  });
+
+  // YEARLY INCOME
+  new Chart(document.getElementById('chart-y-income'),{
+    type:'bar',
+    data:{
+      labels:yrLabels,
+      datasets:[{
+        label:'이자·배당수익',
+        data:yearlyData.map(r=>r.income),
+        backgroundColor:yearlyData.map(r=>r.year>2025?'rgba(217,119,6,0.4)':'rgba(217,119,6,0.8)'),
+        borderRadius:4
+      }]
+    },
+    options:{...baseOpts,
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{display:false}},
+        y:{ticks:{color:'#64748b',callback:v=>v+'억'},grid:{color:'#f1f5f9'}}
+      },
+      plugins:{...baseOpts.plugins,legend:{...baseOpts.plugins.legend,position:'bottom'}}
+    }
+  });
+
+  // RETURNS ASSET
+  new Chart(document.getElementById('chart-r-asset'),{
+    type:'bar',
+    data:{
+      labels:['오피스(투자PJT)','IDC','물류','기타'],
+      datasets:[
+        {label:'투자시점',data:[32.80,38.20,0.13,0],backgroundColor:'rgba(37,99,235,0.7)',borderRadius:4},
+        {label:'현재시점',data:[34.16,42.40,0.13,0],backgroundColor:'rgba(5,150,105,0.7)',borderRadius:4},
+      ]
+    },
+    options:{...baseOpts,
+      scales:{
+        x:{ticks:{color:'#94a3b8'},grid:{display:false}},
+        y:{ticks:{color:'#64748b',callback:v=>v+'%'},grid:{color:'#f1f5f9'}}
+      },
+      plugins:{...baseOpts.plugins,legend:{...baseOpts.plugins.legend,position:'bottom'}}
+    }
+  });
+
+  // RETURNS IRR
+  const topP=projectData.filter(p=>p.tIrr>0&&!p.note?.includes('전')).slice(0,10);
+  new Chart(document.getElementById('chart-r-irr'),{
+    type:'bar',
+    data:{
+      labels:topP.map(p=>p.name),
+      datasets:[
+        {label:'Target IRR',data:topP.map(p=>p.tIrr),backgroundColor:'rgba(37,99,235,0.6)',borderRadius:3},
+        {label:'현재 IRR',data:topP.map(p=>p.cIrr),backgroundColor:'rgba(5,150,105,0.6)',borderRadius:3},
+      ]
+    },
+    options:{...baseOpts,indexAxis:'y',
+      scales:{
+        x:{ticks:{color:'#64748b',callback:v=>v+'%'},grid:{color:'#f1f5f9'}},
+        y:{ticks:{color:'#64748b',font:{size:10}},grid:{display:false}}
+      },
+      plugins:{...baseOpts.plugins,legend:{...baseOpts.plugins.legend,position:'bottom'}}
+    }
+  });
+}
+
+// ════ BOOT ════
+document.addEventListener('DOMContentLoaded',()=>{
+  renderProjects(projectData);
+  renderIrr();
+  renderYearly();
+  initCharts();
+});
+</script>
+</body>
+</html>
